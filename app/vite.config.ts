@@ -51,10 +51,22 @@ function sharedAssets(buildMaps: string[], mobile: boolean): Plugin {
   };
 }
 
+/** облегчённый набор ассетов (assets-lite из Releases) — только 1k-текстуры: тогда 2k не запрашиваем (иначе всё чёрное) */
+function hasOnly1kTextures(): boolean {
+  const dir = path.join(ASSETS, 'textures');
+  if (!fs.existsSync(dir)) return false;
+  for (const d of fs.readdirSync(dir)) {
+    const sub = path.join(dir, d);
+    if (fs.statSync(sub).isDirectory() && fs.readdirSync(sub).some((f) => f.endsWith('_2k.jpg'))) return false;
+  }
+  return true;
+}
+
 export const SHIPPED_MAPS = ['training_field', 'parking_garage'];
 
 export default defineConfig(({ mode }) => ({ // vitest's `test` key is not in vite's UserConfig type
   base: './',
+  define: { __LITE_ASSETS__: JSON.stringify(mode !== 'mobile' && hasOnly1kTextures()) },
   plugins: [sharedAssets(SHIPPED_MAPS, mode === 'mobile')],
   server: { port: 5173, host: true },
   build: { target: 'es2022', chunkSizeWarningLimit: 6000 },

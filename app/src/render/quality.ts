@@ -19,6 +19,9 @@ export interface Quality {
 
 /** the mobile (Capacitor) build ships only 1k textures */
 export const MOBILE_BUILD = import.meta.env.VITE_MOBILE === '1';
+/** assets/ содержит только 1k-текстуры (assets-lite) — vite.config.ts */
+declare const __LITE_ASSETS__: boolean;
+const LITE_ASSETS = typeof __LITE_ASSETS__ !== 'undefined' && __LITE_ASSETS__;
 
 const PROFILES: Record<QualityId, Omit<Quality, 'id'>> = {
   low: { maxDpr: 1.5, renderScale: 0.75, antialias: false, shadowMap: 1024, softShadows: false, tex: '1k', simHz: 500, props: true },
@@ -34,7 +37,7 @@ export function pickQuality(): Quality {
   try { saved = localStorage.getItem(KEY); } catch { /* storage blocked */ }
   const id = ([q, saved].find((x) => x && x in PROFILES) as QualityId | undefined) ?? (isTouch ? 'low' : 'high');
   const p = { id, ...PROFILES[id] };
-  if (MOBILE_BUILD) p.tex = '1k';
+  if (MOBILE_BUILD || LITE_ASSETS) p.tex = '1k';
   return p;
 }
 
