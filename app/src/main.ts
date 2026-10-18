@@ -54,13 +54,17 @@ function fail(e: unknown) {
   link.textContent = 'В меню';
   link.style.cssText = 'display:inline-block;margin-top:16px;color:#c8ff2e';
   box.append(title, hint, link);
-  // технические подробности — только в dev-режиме (в консоли они есть всегда)
-  if (import.meta.env.DEV) {
-    const pre = document.createElement('pre');
-    pre.style.cssText = 'margin-top:16px;color:#ff4d5e;white-space:pre-wrap';
-    pre.textContent = String(e);
-    box.append(pre);
-  }
+  // подробности (сообщение + стек) — под спойлером, чтобы можно было отдебажить и приложить к баг-репорту
+  const det = document.createElement('details');
+  det.style.cssText = 'margin-top:16px;max-width:900px';
+  const sum = document.createElement('summary');
+  sum.textContent = 'Подробности';
+  sum.style.cssText = 'cursor:pointer;color:#9aa4b2';
+  const pre = document.createElement('pre');
+  pre.style.cssText = 'margin-top:8px;color:#ff4d5e;white-space:pre-wrap;font-size:12px;user-select:text';
+  pre.textContent = e instanceof Error ? `${e.name}: ${e.message}\n${e.stack ?? ''}` : String(e);
+  det.append(sum, pre);
+  box.append(det);
   document.getElementById('ui')!.replaceChildren(box);
 }
 
