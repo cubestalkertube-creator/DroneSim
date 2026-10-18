@@ -1,5 +1,6 @@
 # тяжёлые ассеты (пересобираются/скачиваются, см. docs/ASSETS.md)
-/assets/
+/assets/*
+!/assets/presets/
 /tools/blender-*/
 /*.apk
 node_modules/
