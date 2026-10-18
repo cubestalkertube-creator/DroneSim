@@ -42,7 +42,26 @@ async function main() {
 
 function fail(e: unknown) {
   console.error(e);
-  document.getElementById('ui')!.innerHTML = `<div style="padding:40px;font-family:monospace;color:#ff4d5e;pointer-events:auto">Ошибка запуска: ${String(e)}<br><br><a href="./" style="color:#c8ff2e">В меню</a></div>`;
+  const box = document.createElement('div');
+  box.style.cssText = 'padding:40px;font-family:system-ui,sans-serif;color:#e8ecf2;pointer-events:auto';
+  const title = document.createElement('div');
+  title.style.cssText = 'font-size:20px;color:#ff4d5e;margin-bottom:12px';
+  title.textContent = 'Не удалось запустить симулятор';
+  const hint = document.createElement('div');
+  hint.textContent = 'Попробуйте перезагрузить страницу или вернуться в меню.';
+  const link = document.createElement('a');
+  link.href = './';
+  link.textContent = 'В меню';
+  link.style.cssText = 'display:inline-block;margin-top:16px;color:#c8ff2e';
+  box.append(title, hint, link);
+  // технические подробности — только в dev-режиме (в консоли они есть всегда)
+  if (import.meta.env.DEV) {
+    const pre = document.createElement('pre');
+    pre.style.cssText = 'margin-top:16px;color:#ff4d5e;white-space:pre-wrap';
+    pre.textContent = String(e);
+    box.append(pre);
+  }
+  document.getElementById('ui')!.replaceChildren(box);
 }
 
 main().catch(fail);
