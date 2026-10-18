@@ -1,7 +1,7 @@
 // DroneSim bootstrap: presets, the Preact UI (menus, ui/app) and the flight (game/flight.ts).
 // ?map=<id>&drone=<id> skips the menus and loads that flight directly (dev, automated checks); &mode=race — the race.
 import type { DronePreset } from './sim/presets';
-import { ASSET_URL } from './render/world';
+import { fetchAssetJSON, AssetMissingError } from './render/world';
 import { isTouch } from './platform/platform';
 import { settings, updateSettings } from './core/settings';
 import { mountUi } from './ui/app/App';
@@ -17,9 +17,7 @@ async function main() {
   if (direct) ui.screen.value = 'flight';
   const uiRoot = document.getElementById('ui')!;
   mountUi(uiRoot);
-  const r = await fetch(ASSET_URL + 'presets/drones.json');
-  if (!r.ok) throw new Error(`presets/drones.json: ${r.status}`);
-  const presets = (await r.json() as { drones: DronePreset[] }).drones;
+  const presets = (await fetchAssetJSON<{ drones: DronePreset[] }>('presets/drones.json')).drones;
   ui.presets.value = presets;
   if (!presets.some((p) => p.id === settings.value.drone)) updateSettings((s) => { s.drone = presets[0].id; });
 
@@ -48,7 +46,7 @@ function fail(e: unknown) {
   title.style.cssText = 'font-size:20px;color:#ff4d5e;margin-bottom:12px';
   title.textContent = 'Не удалось запустить симулятор';
   const hint = document.createElement('div');
-  hint.textContent = 'Попробуйте перезагрузить страницу или вернуться в меню.';
+  hint.textContent = e instanceof AssetMissingError ? e.message : 'Попробуйте перезагрузить страницу или вернуться в меню.';
   const link = document.createElement('a');
   link.href = './';
   link.textContent = 'В меню';

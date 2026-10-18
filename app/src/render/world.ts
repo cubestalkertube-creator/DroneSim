@@ -7,6 +7,18 @@ import type { Quality } from './quality';
 
 /** relative so the same build works from a web server root and from the Capacitor WebView */
 export const ASSET_URL = './assets/';
+
+/** JSON-ассет с понятной ошибкой: dev-сервер на отсутствующий файл отдаёт index.html (200), и без этой проверки
+ *  вместо причины вылезает «JSON.parse: unexpected character». */
+export class AssetMissingError extends Error {}
+
+export async function fetchAssetJSON<T>(url: string): Promise<T> {
+  const r = await fetch(ASSET_URL + url);
+  if (!r.ok) throw new AssetMissingError(`Не найден ассет «${url}» (HTTP ${r.status}). Распакуйте DroneSim-assets-lite.zip из Releases в папку assets/ в корне репозитория.`);
+  const text = await r.text();
+  try { return JSON.parse(text) as T; }
+  catch { throw new AssetMissingError(`Ассет «${url}» не найден или повреждён (вместо JSON пришёл HTML). Распакуйте DroneSim-assets-lite.zip из Releases в папку assets/ в корне репозитория.`); }
+}
 let texRes: '1k' | '2k' = '2k';
 const manager = new THREE.LoadingManager();
 // Poly Haven props reference their own *_2k.jpg maps: swap to the 1k set on the Low profile / mobile build

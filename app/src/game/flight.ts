@@ -6,7 +6,7 @@ import type { DronePreset } from '../sim/presets';
 import { buildModel } from '../sim/presets';
 import type { MapLayout } from '../sim/layout';
 import type { SimSnapshot } from '../sim/host';
-import { RenderWorld, ASSET_URL } from '../render/world';
+import { RenderWorld, fetchAssetJSON } from '../render/world';
 import { DroneView } from '../render/droneView';
 import { Explosion } from '../render/explosion';
 import { CameraRig, CAM_ORDER, CAM_LABEL } from '../camera/cameras';
@@ -38,11 +38,7 @@ const RTH_PHASE: Record<string, string> = { climb: 'RTH: набор высоты
 /** actions that still work while paused / before take-off; everything else (arm, restart…) waits for the flight */
 const IDLE_ACTIONS = new Set(['pause', 'mute', 'debug']);
 
-async function getJSON<T>(url: string): Promise<T> {
-  const r = await fetch(ASSET_URL + url);
-  if (!r.ok) throw new Error(`${url}: ${r.status}`);
-  return r.json() as Promise<T>;
-}
+const getJSON = fetchAssetJSON;
 
 /** Back to the main menu: a fresh page (frees the renderer, the worker and every listener of the flight).
  *  `screen`: menu screen to open (main.ts reads it from sessionStorage), `lesson`: start that lesson instead. */
