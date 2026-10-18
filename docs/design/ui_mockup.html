@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DroneSim UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090c; --bg2:#0d1116; --panel:rgba(18,23,30,.62); --panel-solid:#121820; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16);
+  --text:#eef2f6; --mute:#8a95a3; --dim:#56606c; --accent:#c8ff2e; --accent-ink:#0b0f02; --cyan:#3dd9ff; --warn:#ffb020; --danger:#ff4d5e;
+  --r:18px; --r-sm:12px; --blur:18px; --shadow:0 20px 60px rgba(0,0,0,.45);
+  --font:'Manrope',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased}
+body{min-height:100vh;overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.mono{font-family:var(--mono)}
+/* mockup nav */
+.nav{position:sticky;top:0;z-index:50;display:flex;gap:6px;padding:10px 16px;background:rgba(7,9,12,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);overflow-x:auto}
+.nav b{font-weight:800;letter-spacing:.14em;font-size:12px;color:var(--mute);margin-right:10px;align-self:center;white-space:nowrap}
+.nav button{padding:7px 12px;border-radius:999px;font-size:13px;color:var(--mute);white-space:nowrap;border:1px solid transparent}
+.nav button.on{color:var(--text);border-color:var(--line2);background:rgba(255,255,255,.04)}
+.screen{display:none;position:relative;min-height:calc(100vh - 52px);overflow:hidden}
+.screen.on{display:block}
+/* shared */
+.bgimg{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(.9)}
+.shade{position:absolute;inset:0;background:radial-gradient(120% 90% at 75% 40%,rgba(7,9,12,0) 0%,rgba(7,9,12,.55) 55%,rgba(7,9,12,.96) 100%),linear-gradient(90deg,rgba(7,9,12,.95) 0%,rgba(7,9,12,.4) 45%,rgba(7,9,12,.2) 100%)}
+.glass{background:var(--panel);backdrop-filter:blur(var(--blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--blur)) saturate(1.2);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--mute)}
+.h1{font-size:clamp(38px,6vw,76px);font-weight:800;letter-spacing:-.03em;line-height:.95}
+.h2{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.h3{font-size:17px;font-weight:700}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;border:1px solid var(--line2);font-size:12px;color:var(--mute)}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:52px;padding:0 26px;border-radius:14px;font-weight:800;font-size:15px;letter-spacing:.02em}
+.btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:0 10px 40px rgba(200,255,46,.25)}
+.btn.ghost{border:1px solid var(--line2);color:var(--text)}
+.kbd{font-family:var(--mono);font-size:11px;padding:2px 7px;border:1px solid var(--line2);border-radius:6px;color:var(--mute)}
+.stars{color:var(--accent);letter-spacing:2px;font-size:13px}.stars i{color:var(--dim);font-style:normal}
+.bar{height:6px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden}.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--accent));border-radius:6px}
+.stat{display:grid;grid-template-columns:110px 1fr 56px;align-items:center;gap:12px;font-size:13px;color:var(--mute)}.stat b{font-family:var(--mono);color:var(--text);text-align:right;font-weight:600}
+/* MAIN MENU */
+#main .wrap{position:relative;z-index:2;display:grid;grid-template-columns:minmax(300px,440px) 1fr minmax(280px,360px);gap:32px;padding:56px clamp(20px,5vw,72px);min-height:calc(100vh - 52px)}
+.logo{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.32em;font-size:13px}
+.logo .mark{width:30px;height:30px;border-radius:9px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink)}
+.menu{display:flex;flex-direction:column;gap:4px;margin-top:44px}
+.menu button{display:flex;align-items:baseline;justify-content:space-between;text-align:left;padding:14px 18px;border-radius:14px;font-size:22px;font-weight:700;color:var(--mute);transition:.18s}
+.menu button span{font-size:12px;font-weight:500;color:var(--dim)}
+.menu button:hover,.menu button.on{color:var(--text);background:rgba(255,255,255,.05)}
+.menu button.on{box-shadow:inset 3px 0 0 var(--accent)}
+.statusbar{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;gap:22px;justify-content:space-between;padding:14px clamp(20px,5vw,72px);font-size:12px;color:var(--mute);border-top:1px solid var(--line);background:rgba(7,9,12,.5);backdrop-filter:blur(8px)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:7px;box-shadow:0 0 12px var(--accent)}
+.dronecard{align-self:end;margin-bottom:56px;padding:22px}
+.dronecard img{width:100%;aspect-ratio:1.4;object-fit:cover;border-radius:12px;background:#1b2129}
+.daily{align-self:start;margin-top:110px;padding:20px;max-width:340px}
+/* MAP SELECT */
+.page{position:relative;z-index:2;padding:40px clamp(16px,4vw,56px) 120px}
+.head{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:26px}
+.grid-maps{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.mapcard{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:var(--bg2);cursor:pointer;transition:.2s}
+.mapcard img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;transition:.4s}
+.mapcard:hover img{transform:scale(1.04)}
+.mapcard.on{outline:2px solid var(--accent);outline-offset:2px}
+.mapcard .meta{padding:16px 18px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.mapcard .tag{position:absolute;top:12px;left:12px}
+.footer-cta{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px clamp(16px,4vw,56px);background:linear-gradient(0deg,rgba(7,9,12,.98),rgba(7,9,12,.7));border-top:1px solid var(--line);backdrop-filter:blur(10px)}
+.screen:not(.on) .footer-cta{display:none}
+.cond{display:flex;gap:26px;flex-wrap:wrap;align-items:center}
+.cond label{font-size:12px;color:var(--mute);display:flex;flex-direction:column;gap:6px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:170px;height:4px;border-radius:4px;background:rgba(255,255,255,.12);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid var(--bg)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid var(--bg)}
+/* DRONE SELECT */
+#drone .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,400px);gap:28px;align-items:start}
+#drone .layout>div{min-width:0}
+.stage{position:relative;border-radius:24px;overflow:hidden;border:1px solid var(--line);background:radial-gradient(70% 70% at 50% 60%,#26303b 0%,#0d1116 70%)}
+.stage img{display:block;width:100%;aspect-ratio:16/10;object-fit:contain;mix-blend-mode:normal}
+.stage .ring{position:absolute;left:50%;bottom:9%;width:56%;height:12%;transform:translateX(-50%);border-radius:50%;border:1px solid rgba(200,255,46,.35);box-shadow:0 0 60px rgba(200,255,46,.15)}
+.stage .hint{position:absolute;right:16px;bottom:14px;font-size:12px;color:var(--mute)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.carousel{display:flex;gap:12px;overflow-x:auto;padding:16px 2px 6px;scroll-snap-type:x mandatory}
+.thumb{flex:0 0 150px;scroll-snap-align:start;border-radius:14px;border:1px solid var(--line);background:var(--bg2);padding:8px;cursor:pointer}
+.thumb img{width:100%;aspect-ratio:1;object-fit:contain;border-radius:9px;background:radial-gradient(70% 70% at 50% 55%,#232b35,#0f141a)}
+.thumb div{font-size:12px;font-weight:700;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thumb.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.spec{padding:24px;display:flex;flex-direction:column;gap:16px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kv div{padding:12px;border:1px solid var(--line);border-radius:12px}
+.kv small{display:block;font-size:11px;color:var(--mute);margin-bottom:4px}
+.kv b{font-family:var(--mono);font-size:16px}
+/* SETTINGS / RATES */
+#settings .cols{display:grid;grid-template-columns:220px 1fr 1fr;gap:20px;align-items:start}
+.side{padding:10px}
+.side button{display:block;width:100%;text-align:left;padding:12px 14px;border-radius:10px;color:var(--mute);font-weight:600}
+.side button.on{background:rgba(255,255,255,.06);color:var(--text)}
+.card{padding:22px}
+.channels{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.ch{display:grid;grid-template-columns:70px 1fr 54px;gap:12px;align-items:center;font-size:12px;color:var(--mute)}
+.ch .track{position:relative;height:8px;border-radius:8px;background:rgba(255,255,255,.07)}
+.ch .track i{position:absolute;top:0;bottom:0;left:50%;background:var(--cyan);border-radius:8px}
+.ch b{font-family:var(--mono);color:var(--text);text-align:right}
+svg.curve{width:100%;height:auto;display:block;margin-top:10px}
+.sl{display:grid;grid-template-columns:130px 1fr 60px;gap:12px;align-items:center;font-size:13px;color:var(--mute);margin-top:12px}
+.sl b{font-family:var(--mono);color:var(--text);text-align:right}
+.sl input{width:100%}
+/* FPV OSD */
+#osd .view{position:absolute;inset:0;background-size:cover;background-position:center 60%;filter:contrast(1.05) saturate(1.05)}
+#osd .fish{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.55) 85%,#000 100%)}
+#osd .noise{position:absolute;inset:0;opacity:.08;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");mix-blend-mode:overlay}
+.osd{position:absolute;inset:0;font-family:var(--mono);font-weight:700;color:#fff;text-shadow:0 0 2px #000,0 0 6px rgba(0,0,0,.8);font-size:clamp(13px,1.5vw,20px)}
+.osd .p{position:absolute;display:flex;gap:10px;align-items:center}
+.osd .warn{color:var(--warn);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.2}}
+.osd .cross{position:absolute;left:50%;top:50%;width:46px;height:46px;transform:translate(-50%,-50%)}
+.osd .hz{position:absolute;left:50%;top:50%;width:34%;height:2px;background:rgba(255,255,255,.85);transform:translate(-50%,-50%) rotate(-8deg);box-shadow:0 0 3px #000}
+.osd .hz::before,.osd .hz::after{content:"";position:absolute;top:-6px;width:2px;height:14px;background:#fff}
+.osd .hz::before{left:0}.osd .hz::after{right:0}
+.osd .home{display:inline-block;transform:rotate(35deg)}
+/* MOBILE */
+.phone{margin:34px auto;width:min(980px,96vw);aspect-ratio:19.5/9;border-radius:46px;padding:12px;background:#000;box-shadow:0 30px 90px rgba(0,0,0,.7),inset 0 0 0 2px #262c34;position:relative}
+.phone .scr{position:relative;width:100%;height:100%;border-radius:36px;overflow:hidden;background-size:cover;background-position:center}
+.phone .notch{position:absolute;left:10px;top:50%;width:10px;height:70px;transform:translateY(-50%);background:#000;border-radius:10px;z-index:9}
+.stick{position:absolute;bottom:9%;width:25%;aspect-ratio:1;border-radius:50%;background:rgba(10,14,18,.28);border:1.5px solid rgba(255,255,255,.28);backdrop-filter:blur(4px)}
+.stick::after{content:"";position:absolute;left:50%;top:50%;width:1px;height:70%;background:rgba(255,255,255,.18);transform:translate(-50%,-50%)}
+.stick::before{content:"";position:absolute;left:50%;top:50%;height:1px;width:70%;background:rgba(255,255,255,.18);transform:translate(-50%,-50%)}
+.knob{position:absolute;width:34%;aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.88);box-shadow:0 4px 20px rgba(0,0,0,.5);transform:translate(-50%,-50%)}
+.mbtn{position:absolute;padding:8px 14px;border-radius:999px;background:rgba(10,14,18,.45);border:1px solid rgba(255,255,255,.2);font-size:12px;font-weight:800;backdrop-filter:blur(6px)}
+.arm{position:absolute;top:5%;left:50%;transform:translateX(-50%);width:28%;height:34px;border-radius:999px;background:rgba(10,14,18,.5);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;padding:3px;backdrop-filter:blur(6px)}
+.arm i{width:28px;height:28px;border-radius:50%;background:var(--accent)}
+.arm span{flex:1;text-align:center;font-size:11px;font-weight:800;letter-spacing:.2em;color:var(--mute)}
+/* ACADEMY */
+.lessons{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.lesson{padding:18px;border-radius:16px;border:1px solid var(--line);background:var(--bg2);display:flex;flex-direction:column;gap:10px;min-height:150px}
+.lesson .n{font-family:var(--mono);color:var(--dim);font-size:12px}
+.lesson.done{border-color:rgba(200,255,46,.35)}
+.lesson.lock{opacity:.45}
+.progress{display:flex;gap:16px;align-items:center;margin:12px 0 24px}
+@media (max-width:980px){
+  #main .wrap{grid-template-columns:1fr;gap:20px}.daily{display:none}.dronecard{margin-bottom:80px}
+  #drone .layout,#settings .cols{grid-template-columns:1fr}
+  .footer-cta{flex-direction:column;align-items:stretch}.cond{gap:14px}
+}
+</style>
+</head>
+<body>
+<nav class="nav" id="nav">
+  <b>DRONESIM · UI</b>
+  <button data-s="main" class="on">Главное меню</button>
+  <button data-s="maps">Выбор карты</button>
+  <button data-s="drone">Выбор дрона</button>
+  <button data-s="academy">Академия</button>
+  <button data-s="settings">Управление / Rates</button>
+  <button data-s="osd">Полёт · FPV OSD</button>
+  <button data-s="mobile">Полёт · телефон</button>
+</nav>
+
+<!-- MAIN -->
+<section class="screen on" id="main">
+  <div class="bgimg" style="background-image:url(../previews/map_abandoned_factory.png)"></div>
+  <div class="shade"></div>
+  <div class="wrap">
+    <div>
+      <div class="logo"><div class="mark">◆</div>DRONESIM</div>
+      <div style="margin-top:72px" class="eyebrow">Симулятор пилотирования</div>
+      <div class="h1" style="margin-top:12px">Летай.<br>Как в жизни.</div>
+      <div class="menu">
+        <button class="on">Играть <span>свободный полёт · гонка · фристайл</span></button>
+        <button>Академия <span>7 / 12 уроков</span></button>
+        <button>Ангар <span>12 дронов</span></button>
+        <button>Настройки <span>RadioMaster TX12</span></button>
+        <button>Титры</button>
+      </div>
+    </div>
+    <div class="daily glass">
+      <div class="eyebrow">Испытание дня</div>
+      <div class="h3" style="margin:8px 0 6px">Труба на заводе</div>
+      <div style="color:var(--mute);font-size:13px;line-height:1.5">Power loop вокруг 50-метровой трубы и нырок в цех через пролом в крыше.</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px"><span class="stars">★★<i>★</i></span><span class="mono" style="font-size:13px">00:41.27</span></div>
+    </div>
+    <div class="dronecard glass">
+      <div class="eyebrow" style="margin-bottom:12px">Текущий дрон</div>
+      <img src="../previews/ui/fpv_5in_freestyle.png" alt="" style="object-fit:contain;background:radial-gradient(70% 70% at 50% 55%,#2a333e,#0f141a)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 12px"><div class="h3">FPV 5" Freestyle</div><span class="chip">Acro</span></div>
+      <div style="display:grid;gap:9px">
+        <div class="stat">Тяга / вес<div class="bar"><i style="width:78%"></i></div><b>10.5</b></div>
+        <div class="stat">Макс. скорость<div class="bar"><i style="width:80%"></i></div><b>140</b></div>
+        <div class="stat">Время полёта<div class="bar"><i style="width:18%"></i></div><b>4м</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="statusbar"><span><span class="dot"></span>RadioMaster TX12 подключён · калибровка ОК</span><span class="mono">v0.1.0 · 144 FPS · физика 1000 Гц</span><span><span class="kbd">Enter</span> выбрать <span class="kbd">Esc</span> назад</span></div>
+</section>
+
+<!-- MAPS -->
+<section class="screen" id="maps">
+  <div class="page">
+    <div class="head"><div><div class="eyebrow">Свободный полёт · шаг 1 из 3</div><div class="h2" style="margin-top:6px">Выбери локацию</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip on">Все</span><span class="chip">Открытые</span><span class="chip">Бандо</span><span class="chip">Город</span><span class="chip">Трассы</span></div></div>
+    <div class="grid-maps" id="mapgrid"></div>
+  </div>
+  <div class="footer-cta">
+    <div class="cond">
+      <label>Время суток<input type="range" min="0" max="24" value="13"></label>
+      <label>Ветер, м/с <span class="mono" style="color:var(--text)" id="windv">3.0</span><input type="range" min="0" max="15" step=".5" value="3" oninput="windv.textContent=(+this.value).toFixed(1)"></label>
+      <div style="display:flex;gap:6px"><span class="chip on">Ясно</span><span class="chip">Пасмурно</span><span class="chip">Туман</span><span class="chip">Дождь</span></div>
+    </div>
+    <div style="display:flex;gap:10px"><button class="btn ghost">Назад</button><button class="btn primary">Далее · дрон →</button></div>
+  </div>
+</section>
+
+<!-- DRONE -->
+<section class="screen" id="drone">
+  <div class="page">
+    <div class="head"><div><div class="eyebrow">Свободный полёт · шаг 2 из 3</div><div class="h2" style="margin-top:6px">Выбери дрон</div></div>
+      <div class="tabs" id="dtabs"><span class="chip on" data-c="all">Все</span><span class="chip" data-c="fpv">FPV</span><span class="chip" data-c="camera">Камерные</span><span class="chip" data-c="dev">Dev / PX4</span><span class="chip" data-c="wing">Крылья</span></div></div>
+    <div class="layout">
+      <div>
+        <div class="stage"><div class="ring"></div><img id="dimg" src="../previews/ui/fpv_5in_freestyle.png" alt=""><div class="hint">⟲ перетащи, чтобы повернуть</div></div>
+        <div class="carousel" id="carousel"></div>
+      </div>
+      <div class="spec glass">
+        <div><div class="eyebrow" id="dclass">FPV · Betaflight</div><div class="h2" style="margin-top:6px" id="dname">FPV 5" Freestyle</div><div style="color:var(--mute);font-size:14px;line-height:1.55;margin-top:8px" id="ddesc"></div></div>
+        <div class="kv" id="dkv"></div>
+        <div style="display:grid;gap:10px" id="dbars"></div>
+        <div><div class="eyebrow" style="margin-bottom:8px">Режимы полёта</div><div style="display:flex;gap:6px;flex-wrap:wrap" id="dmodes"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-cta"><div style="color:var(--mute);font-size:13px">Совет: начни с камерного дрона в режиме <b style="color:var(--text)">Normal</b>, затем переходи к FPV в <b style="color:var(--text)">Angle</b>.</div><div style="display:flex;gap:10px"><button class="btn ghost">Ангар · настройка</button><button class="btn primary">Взлёт</button></div></div>
+</section>
+
+<!-- ACADEMY -->
+<section class="screen" id="academy">
+  <div class="page">
+    <div class="eyebrow">Академия</div><div class="h2" style="margin-top:6px">Путь пилота</div>
+    <div class="progress"><div class="bar" style="flex:1;height:8px"><i style="width:58%"></i></div><span class="mono">7 / 12</span><span class="stars">★ 17<i> / 36</i></span></div>
+    <div class="lessons" id="lessons"></div>
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section class="screen" id="settings">
+  <div class="page">
+    <div class="head"><div><div class="eyebrow">Настройки</div><div class="h2" style="margin-top:6px">Управление</div></div><button class="btn ghost">Импорт из Betaflight CLI</button></div>
+    <div class="cols">
+      <div class="side glass"><button class="on">Управление</button><button>Rates и expo</button><button>Графика</button><button>Звук</button><button>Геймплей</button><button>OSD</button><button>Язык</button></div>
+      <div class="card glass">
+        <div class="h3">RadioMaster TX12 <span class="chip" style="margin-left:8px"><span class="dot"></span>USB HID</span></div>
+        <div style="color:var(--mute);font-size:13px;margin-top:6px">Mode 2 · калибровано · дедзона 2%</div>
+        <div class="channels" id="chans"></div>
+        <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap"><button class="btn ghost" style="height:42px">Калибровать</button><button class="btn ghost" style="height:42px">Назначить тумблеры</button></div>
+      </div>
+      <div class="card glass">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div class="h3">Rates · Actual</div><div style="display:flex;gap:6px"><span class="chip on">Roll</span><span class="chip">Pitch</span><span class="chip">Yaw</span></div></div>
+        <svg class="curve" viewBox="0 0 400 240" id="curve"></svg>
+        <div class="sl">Center sens.<input type="range" min="20" max="200" value="70" id="rc"><b id="rcv">70</b></div>
+        <div class="sl">Max rate °/с<input type="range" min="200" max="1200" step="10" value="670" id="rm"><b id="rmv">670</b></div>
+        <div class="sl">Expo<input type="range" min="0" max="1" step=".01" value=".54" id="re"><b id="rev">0.54</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OSD -->
+<section class="screen" id="osd">
+  <div class="view" style="background-image:url(../previews/map_ruined_district.png)"></div>
+  <div class="noise"></div><div class="fish"></div>
+  <div class="osd">
+    <div class="p" style="left:4%;top:6%">⚡ 22.8V <span style="opacity:.7">3.80/C</span></div>
+    <div class="p" style="left:4%;top:12%">412 mAh</div>
+    <div class="p" style="right:4%;top:6%">LQ 100 · −72dBm</div>
+    <div class="p" style="right:4%;top:12%">⏱ 01:37</div>
+    <div class="p" style="left:50%;top:6%;transform:translateX(-50%)">ACRO</div>
+    <div class="hz"></div>
+    <svg class="cross" viewBox="0 0 46 46"><path d="M23 14v8M23 24v8M14 23h8M24 23h8" stroke="#fff" stroke-width="2.5"/></svg>
+    <div class="p" style="left:4%;bottom:12%">THR 64%</div>
+    <div class="p" style="left:4%;bottom:6%">⇡ 23.4 m</div>
+    <div class="p" style="right:4%;bottom:12%">97 km/h</div>
+    <div class="p" style="right:4%;bottom:6%"><span class="home">➤</span> 214 m</div>
+    <div class="p warn" style="left:50%;bottom:20%;transform:translateX(-50%)">LOW BATTERY</div>
+  </div>
+</section>
+
+<!-- MOBILE -->
+<section class="screen" id="mobile">
+  <div class="page" style="padding-bottom:40px">
+    <div class="eyebrow">Телефон · ландшафт</div><div class="h2" style="margin-top:6px">Полёт с тач-стиками</div>
+    <div class="phone"><div class="notch"></div>
+      <div class="scr" style="background-image:url(../previews/map_parking_garage.png)">
+        <div class="arm"><i></i><span>СВАЙП — ARM</span></div>
+        <div class="mbtn" style="left:4%;top:5%">☰</div>
+        <div class="mbtn" style="right:4%;top:5%">ANGLE</div>
+        <div class="mbtn" style="right:4%;top:19%">📷 FPV</div>
+        <div class="mbtn" style="left:4%;top:19%">⌂ RTH</div>
+        <div class="osd" style="font-size:12px">
+          <div class="p" style="left:16%;top:6%">⚡ 15.6V</div><div class="p" style="right:16%;top:6%">⏱ 00:52</div>
+          <div class="p" style="left:50%;top:44%;transform:translateX(-50%)">✛</div>
+          <div class="p" style="left:50%;bottom:6%;transform:translateX(-50%)">⇡ 8.2m · 34 km/h</div>
+        </div>
+        <div class="stick" style="left:5%"><div class="knob" style="left:50%;top:72%"></div></div>
+        <div class="stick" style="right:5%"><div class="knob" style="left:62%;top:40%"></div></div>
+      </div>
+    </div>
+    <div style="color:var(--mute);font-size:14px;max-width:760px;line-height:1.6">Левый стик — газ/рысканье (в FPV без пружины по газу), правый — тангаж/крен. Размер, прозрачность и положение стиков настраиваются; ARM — свайпом, чтобы не взвести моторы случайно. Хаптика при прохождении центра.</div>
+  </div>
+</section>
+
+<script>
+const $=s=>document.querySelector(s);
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===b.dataset.s));scrollTo(0,0)});
+// maps
+const maps=[["training_field","Полигон","Открытое поле · ворота · ангар",1,"Ясно"],["parking_garage","Паркинг","5 уровней · пандусы · колонны",2,"Пасмурно"],["abandoned_factory","Заброшенный завод","Цех · труба 50 м · дырявая крыша",3,"Закат"],["ruined_district","Разрушенный квартал","Панельки · обрушения · дворы",4,"Пыль"]];
+$('#mapgrid').innerHTML=maps.map((m,i)=>`<div class="mapcard ${i==2?'on':''}" onclick="document.querySelectorAll('.mapcard').forEach(c=>c.classList.remove('on'));this.classList.add('on')"><span class="chip tag" style="background:rgba(7,9,12,.6);backdrop-filter:blur(6px)">${m[4]}</span><img src="../previews/map_${m[0]}.png" alt=""><div class="meta"><div><div class="h3">${m[1]}</div><div style="color:var(--mute);font-size:13px;margin-top:4px">${m[2]}</div></div><span class="stars">${'★'.repeat(m[3])}<i>${'★'.repeat(5-m[3])}</i></span></div></div>`).join('');
+// drones
+const drones=[
+ ["fpv_5in_freestyle","FPV 5\" Freestyle","fpv","FPV · Betaflight","Фристайл-сетап: 2306 1750KV, 6S, GoPro сверху. Резкий, точный, мгновенный панч.",["620 г","10.5","140 км/ч","2.5–5 мин"],[78,80,18,80],["Acro","Angle","Horizon","Turtle"]],
+ ["fpv_5in_racer","FPV 5\" Racer","fpv","FPV · Betaflight","Лёгкий гоночный квад, уптилт 45°, аналоговое видео с минимальной задержкой.",["480 г","13","175 км/ч","2–3 мин"],[95,95,12,95],["Acro","Angle","Horizon"]],
+ ["fpv_7in_longrange","FPV 7\" Long Range","fpv","FPV · Betaflight + GPS","Li-ion, ELRS 900 МГц, GPS Rescue. Дальние полёты и управление батареей.",["950 г","5","120 км/ч","12–22 мин"],[40,68,60,80],["Acro","Angle","GPS Rescue"]],
+ ["fpv_10in_heavy","FPV 10\" Heavy Lift","fpv","FPV · грузовой","До 1.5 кг груза. Инерционный, сильный пропвош, доставка в зону.",["2.2 кг","4","100 км/ч","10–20 мин"],[32,55,55,80],["Angle","Acro","GPS Rescue"]],
+ ["cinewhoop_3in","Cinewhoop 3\"","fpv","FPV · съёмка","Пропеллеры в кольцах: можно касаться стен. Плавные пролёты в помещениях.",["380 г","5","80 км/ч","4–6 мин"],[40,45,25,40],["Angle","Acro","Turtle"]],
+ ["camera_drone_fold","Камерный (класс Mavic)","camera","GPS · Cine/Normal/Sport","Отпустил стики — висит. Подвес, RTH, датчики препятствий, ATTI при потере GPS.",["900 г","—","75 км/ч","38–46 мин"],[20,42,95,20],["Cine","Normal","Sport","ATTI","RTH"]],
+ ["parrot_bebop_2","Parrot Bebop 2","camera","GPS · Wi-Fi","Дрон для смартфона: управление с телефона, цифровая стабилизация.",["503 г","—","58 км/ч","20–25 мин"],[18,32,55,20],["Normal","Sport","RTH"]],
+ ["typhoon_h480","Typhoon H480 (hex)","camera","GPS · гексакоптер","Шасси убираются, камера 360°, полёт с отказом мотора.",["2.02 кг","—","70 км/ч","22–25 мин"],[22,40,55,20],["Angle","Smart","Home"]],
+ ["x500","Holybro X500 V2","dev","PX4","Платформа разработчиков: Position, Mission, RTL. Параметры моторов из PX4.",["2.0 кг","2.6","55 км/ч","15–18 мин"],[25,30,40,40],["Position","Altitude","Stabilized","Mission"]],
+ ["iris_with_standoffs","3DR Iris+","dev","ArduPilot","Stabilize с ручным газом, AltHold, Loiter, Auto. Классика ArduPilot.",["1.5 кг","2.4","65 км/ч","16–22 мин"],[24,36,45,40],["Stabilize","AltHold","Loiter","Auto"]],
+ ["standard_vtol","VTOL крыло X8","wing","PX4 VTOL","Вертикальный взлёт, переход в самолёт, полёт по маршруту, посадка.",["5 кг","—","90 км/ч","60–90 мин"],[20,50,100,60],["MC Position","Transition","FW Mission"]],
+ ["delta_wing_lm","Дельта-крыло (класс Shahed)","wing","Fixed-wing FBW","Учебная модель планера: старт с направляющей, крейсер, ветер, маршрут.",["200 кг","—","185 км/ч","—"],[15,90,100,60],["FBW-A","Cruise","Waypoints"]]];
+function showDrone(i){const d=drones[i];$('#dimg').src=`../previews/ui/${d[0]}.png`;$('#dname').textContent=d[1];$('#dclass').textContent=d[3];$('#ddesc').textContent=d[4];
+ $('#dkv').innerHTML=['Масса','TWR','Макс. скорость','Время полёта'].map((k,j)=>`<div><small>${k}</small><b>${d[5][j]}</b></div>`).join('');
+ $('#dbars').innerHTML=['Отзывчивость','Скорость','Выносливость','Сложность'].map((k,j)=>`<div class="stat">${k}<div class="bar"><i style="width:${d[6][j]}%"></i></div><b>${d[6][j]}</b></div>`).join('');
+ $('#dmodes').innerHTML=d[7].map((m,j)=>`<span class="chip ${j==0?'on':''}">${m}</span>`).join('');
+ document.querySelectorAll('.thumb').forEach((t,j)=>t.classList.toggle('on',+t.dataset.i===i));}
+function renderCarousel(c){$('#carousel').innerHTML=drones.map((d,i)=>(c==='all'||d[2]===c)?`<div class="thumb" data-i="${i}" onclick="showDrone(${i})"><img src="../previews/ui/${d[0]}.png" alt=""><div>${d[1]}</div></div>`:'').join('');}
+document.querySelectorAll('#dtabs .chip').forEach(t=>t.onclick=()=>{document.querySelectorAll('#dtabs .chip').forEach(x=>x.classList.toggle('on',x===t));renderCarousel(t.dataset.c)});
+renderCarousel('all');showDrone(0);
+// academy
+const L=[["Пульт и стики","Что делает каждый стик, арминг, режимы",3],["Висение","Взлёт, удержание в круге, посадка на H",3],["Ориентация","Носом к себе, восьмёрка, облёт столба",3],["ATTI без GPS","Ветер сносит — держи позицию сам",2],["Съёмка","Ровная орбита и плавный reveal",2],["FPV · Angle","Ворота и слалом с самовыравниванием",3],["Acro · газ","Удержание высоты без автоматики",1],["Acro · повороты","Координированный разворот, split-S",0],["Трюки","Flip, roll, power loop, matty flip",0],["Бандо","Окна, гапы, пропвош",0],["Long Range","Батарея, RF-тени, GPS Rescue",0],["Крыло и VTOL","Переход, маршрут, посадка",0]];
+$('#lessons').innerHTML=L.map((l,i)=>`<div class="lesson ${l[2]?'done':''} ${i>7?'lock':''}"><span class="n">${String(i+1).padStart(2,'0')}${i>7?' · 🔒':''}</span><div class="h3">${l[0]}</div><div style="color:var(--mute);font-size:13px;line-height:1.5;flex:1">${l[1]}</div><span class="stars">${'★'.repeat(l[2])}<i>${'★'.repeat(3-l[2])}</i></span></div>`).join('');
+// channels
+const ch=[["Throttle",.28],["Yaw",.02],["Pitch",-.35],["Roll",.18],["AUX1 ARM",1],["AUX2 MODE",-1]];
+$('#chans').innerHTML=ch.map(c=>{const v=c[1],w=Math.abs(v)*50,l=v<0?50-w:50;return `<div class="ch">${c[0]}<div class="track"><i style="left:${l}%;width:${w}%"></i></div><b>${Math.round(1500+v*500)}</b></div>`}).join('');
+// Actual rates curve (Betaflight applyActualRates)
+function rate(x,c,m,e){const ax=Math.abs(x);const ex=ax*(Math.pow(x,5)*e+x*(1-e));return x*c+Math.max(0,m-c)*ex}
+function drawCurve(){const c=+$('#rc').value,m=+$('#rm').value,e=+$('#re').value;$('#rcv').textContent=c;$('#rmv').textContent=m;$('#rev').textContent=e.toFixed(2);
+ const W=400,H=240,P=28,maxY=1200;let p='';for(let i=0;i<=100;i++){const x=i/100,y=rate(x,c,m,e);p+=(i?'L':'M')+(P+x*(W-2*P)).toFixed(1)+','+(H-P-y/maxY*(H-2*P)).toFixed(1)}
+ let g='';for(let k=0;k<=4;k++){const y=H-P-k*(H-2*P)/4;g+=`<line x1="${P}" x2="${W-P}" y1="${y}" y2="${y}" stroke="rgba(255,255,255,.06)"/><text x="${P-6}" y="${y+4}" fill="#56606c" font-size="10" text-anchor="end" font-family="JetBrains Mono">${k*300}</text>`}
+ $('#curve').innerHTML=g+`<path d="${p}" fill="none" stroke="#c8ff2e" stroke-width="3" stroke-linecap="round"/><text x="${W-P}" y="${H-8}" fill="#56606c" font-size="10" text-anchor="end" font-family="JetBrains Mono">стик 100%</text><text x="${W-P}" y="${P-8}" fill="#c8ff2e" font-size="12" text-anchor="end" font-family="JetBrains Mono">${Math.round(rate(1,c,m,e))}°/с</text>`}
+['#rc','#rm','#re'].forEach(s=>$(s).oninput=drawCurve);drawCurve();
+</script>
+</body>
+</html>

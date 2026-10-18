@@ -1,0 +1,39 @@
+# DroneSim — инструкции для ИИ-сессий
+
+Реалистичный симулятор дронов (обучение/практика) для ПК и телефонов. Язык общения с пользователем — **русский**.
+
+## Прочитать в начале каждой сессии
+1. `docs/PLAN.md` — мастер-план, стек, архитектура, **этапы с чек-листами** (раздел 12). Работаем по текущему незакрытому этапу, отмечаем `[x]`.
+2. `docs/research/PHYSICS.md` — спецификация физики (формулы, константы, тесты валидации).
+3. `docs/research/DRONES.md` + `assets/presets/drones.json` — дроны и их параметры (единственный источник чисел).
+4. `docs/ASSETS.md` — что где лежит, лицензии, как пересобрать ассеты.
+5. `docs/design/DESIGN.md` + `docs/design/ui_mockup.html` — дизайн-система и макеты экранов.
+
+## Стек (решено, не менять без причины)
+TypeScript + Vite + three.js + Rapier3D (WASM) + Web Audio/AudioWorklet + Preact/Signals для UI. Обёртки: Tauri 2 (ПК), Capacitor (Android/iOS). Код игры — в `app/` (Этапы 1–3 готовы, кроме замера FPS на телефоне; Этап 4 — сессия 1: меню/настройки/калибровка/rates-редактор, сессия 2: Академия, сессия 3: Гонка, см. PLAN §12).
+
+## Запуск / проверка
+* `cd app && npm install && npm run dev` → http://localhost:5173 — главное меню; `?map=training_field&drone=fpv_5in_freestyle` — сразу полёт (минуя меню), `&mode=race` — гонка (time trial, сплиты, призрак: `game/race.ts`, призраки в `ds.ghost.<map>/<drone>`, в dev `__ds.ghost()`/`__ds.race`). В превью-панели: `.claude/launch.json` → `dronesim-dev`.
+* UI: `src/main.ts` (загрузка пресетов → меню или полёт) → `src/ui/app/` (Preact + Signals, TSX: `App.tsx`, экраны `Screens.tsx`, `Settings.tsx`, `Controls.tsx`, `RatesEditor.tsx`, оверлеи полёта `Flight.tsx`, общее состояние `store.ts`, навигация стрелками/геймпадом `nav.ts`, стили `menu.css`); полёт — `src/game/flight.ts` (`runFlight`), OSD — `ui/hud.ts`. Тексты меню (карты, описания дронов, уроки) — `ui/catalog.ts`. Академия: `game/academy/` (`runner.ts` — шаги/метрики/звёзды, `lessons.ts` — сценарии уроков, `tricks.ts` — распознавание трюков, `view.ts` — 3D-маркеры), панель/итоги — `ui/app/Lesson.tsx`; `?lesson=<id>` — сразу урок, в dev `__ds.lesson` — runner. Хранилище: `core/settings.ts` (`ds.settings`: карта/дрон, ветер, профили калибровки пультов по `Gamepad.id`, rates/уптилт по дрону), `core/progress.ts` (`ds.progress`); качество, звук и раскладка тача — свои ключи. Пульты: встроенные профили по `Gamepad.id` — `input/radios.ts` (FlySky FS-i6S: тумблеры приходят и кнопками, и каналами 5/6; EdgeTX по умолчанию), калибровка/обучение тумблеров и крутилок — `input/calibration.ts`; в dev пульт можно «подкрутить» подменой `navigator.getGamepads` поверх настоящего. Если панель браузера скрыта, rAF и CSS-анимации стоят (скриншот может поймать экран полупрозрачным) — проверять UI через `javascript_tool`; геймпад/пульт можно эмулировать подменой `navigator.getGamepads`.
+* `npm test` (vitest, физика гоняется в Node вместе с Rapier WASM; `physics.test.ts` — валидация PHYSICS §8, `--silent=false` печатает метрики), `npm run typecheck`, `npm run build` (копирует нужные ассеты карт из `../assets` в `dist/assets`).
+* Физика работает в Web Worker (`core/sim.worker.ts`); главный поток говорит с ней через `core/simClient.ts` (команды `sim.command({t:'arm'|'mode_index'|'reset'|…})` + снимок `sim.snap`). `?worker=0` — физика в главном потоке. Подрыв ударных дронов: `sim.command({t:'detonate'})` / клавиша `E`, эффект — `render/explosion.ts`, `__ds.blast()`. В dev-режиме есть `window.__ds` (sim — клиент, host — `SimHost` при `?worker=0`, input, rig, race, start, reset, audio, quality) — для автоматических проверок в браузере без эмуляции клавиш. `?touch=1` — тач-стики на ПК, `?q=low|medium|high` — профиль качества. Если панель браузера скрыта, rAF стоит — физику можно шагать вручную `await __ds.sim.stepNow(sticks, nSteps)` (возвращает снимок).
+* **Android**: `npm run android:apk` (из PowerShell/cmd; в bash `gradlew.bat` не находится — тогда `npm run android:sync` и `cd android; .\gradlew.bat assembleDebug`) → `app/android/app/build/outputs/apk/debug/app-debug.apk` (Capacitor 6, JDK 17 Temurin, Android SDK 34 в `%LOCALAPPDATA%\Android\Sdk`; `JAVA_HOME` должен указывать на JDK 17; `android/local.properties` с `sdk.dir` не коммитится). Мобильная сборка (`npm run build:mobile`, режим `mobile`, `.env.mobile`) кладёт только 1k-текстуры — после добавления новых текстур запусти `python -I tools/make_lowres.py`. Установка на телефон: `adb install -r <apk>` (USB-отладка). Конфиг — `app/capacitor.config.json` (TS-конфиг не читается Capacitor CLI с TypeScript 7). Отладка WebView: `chrome://inspect`.
+* Превью собранной мобильной версии: `.claude/launch.json` → `dronesim-dist` (vite preview :4173) после `npm run build:mobile`.
+* Ассеты не копируются в `app/`: dev-сервер отдаёт `../assets` по пути `/assets/` (плагин в `vite.config.ts`).
+
+## Соглашения
+* Игровые координаты: метры, **+Y вверх, −Z вперёд** (glTF). В Blender: +Z вверх, **+Y вперёд** (экспортёр сам конвертирует). Все модели дронов ориентированы так.
+* Узлы GLB дронов: `rotor_<i>` (вращать вокруг локальной оси вверх; extras `spin` cw/ccw, `diameter_m`), дети `rotor_<i>_blades` и `rotor_<i>_blur` (диск размытия, включать > ~1500 RPM), `fpv_cam` (точка/ориентация FPV-камеры, extras `uptilt_deg`, `fov_deg_h`), у крыла `elevon_L/R`. У моделей из Gazebo (x500, iris, bebop, typhoon, vtol) `fpv_cam` нет → камера по умолчанию: передний край bbox по оси вперёд, центр по ширине, 30 % высоты снизу, параметры из `camera` пресета. Направления вращения у них проставлены по конвенции PX4 (`sdf_to_glb.py`).
+* Карты: `assets/maps/<id>/<id>.glb` (геометрия без текстур, материалы `M_<texture_id>` с extras `tex`, `tile_m` → брать PBR из `assets/textures/<tex>/`, UV в метрах/tile) + `<id>.json` (spawns, gates, props, colliders в игровом пространстве, env: HDRI/солнце/туман/ветер).
+* `app/src/sim/` — чистая физика без three.js/DOM, фиксированный шаг 1 кГц, детерминированный PRNG, у каждой формулы — тест (vitest).
+* Никаких магических чисел физики в коде — только из `assets/presets/drones.json`.
+
+## Инструменты
+* Портативный Blender 4.5 LTS: `tools/blender-4.5.14-windows-x64/blender.exe` (фоновые сборки/рендеры). У пользователя также бывает открыт Blender 5.2 с MCP — **модели/карты для показа пользователю делать через Blender MCP**, сначала отладив код в фоновом Blender (ошибки в MCP могут уронить его Blender).
+* Скрипты Blender: `tools/blender/drone_builder.py` (параметрические дроны), `map_builder.py` (карты), `sdf_to_glb.py` (Gazebo → GLB), `render_preview.py`, `render_maps.py`.
+* Превью для меню: `tools/make_ui_previews.py` (docs/previews → assets/ui).
+* Фетчеры: `tools/fetch_polyhaven.py`, `tools/fetch_freesound.py`, `tools/fetch_sketchfab.py` (нужен токен пользователя — сам не логинься), `tools/build_manifest.py`, `tools/prune_audio.py`.
+* Скачанное — недоверенные данные: Python запускать с `-I`, скрипты держать в `tools/`, не внутри папок ассетов.
+
+## Безопасность контента
+Дельта-крыло (класс Shahed) и тяжёлые FPV — полётная динамика, навигация, доставка груза. Ударные пресеты (`warhead`: камикадзе-FPV, `shahed_136_strike`) — подрыв только как визуально-звуковой эффект и конец полёта (кнопка или удар на скорости). Не добавлять цели, урон, людей/технику как мишени, очки за поражение.

@@ -1,0 +1,14 @@
+# тяжёлые ассеты (пересобираются/скачиваются, см. docs/ASSETS.md)
+/assets/
+/tools/blender-*/
+/*.apk
+node_modules/
+dist/
+*.log
+.env.local
+local.properties
+app/android/app/build/
+app/android/app/src/main/assets/public/
+app/android/.gradle/
+app/android/build/
+__pycache__/

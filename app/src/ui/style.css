@@ -1,0 +1,152 @@
+:root {
+  --bg: #07090c; --panel: rgba(14, 18, 24, .72); --line: rgba(255, 255, 255, .1); --text: #eef2f6; --mute: #8a95a3;
+  --accent: #c8ff2e; --accent-ink: #0b0f02; --cyan: #3dd9ff; --warn: #ffb020; --danger: #ff4d5e;
+  --font: 'Manrope', system-ui, sans-serif; --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0 }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow: hidden; -webkit-font-smoothing: antialiased; user-select: none }
+#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none }
+#ui { position: fixed; inset: 0; pointer-events: none }
+.osd { position: absolute; inset: 0; font-family: var(--mono); font-weight: 700; font-size: clamp(12px, 1.35vw, 19px);
+  color: #fff; text-shadow: 0 0 2px #000, 0 0 6px rgba(0, 0, 0, .85) }
+.osd .p { position: absolute; white-space: nowrap }
+.osd .tl { left: 3%; top: 4% } .osd .tr { right: 3%; top: 4%; text-align: right }
+.osd .bl { left: 3%; bottom: 5% } .osd .br { right: 3%; bottom: 5%; text-align: right }
+.osd .tc { left: 50%; top: 4%; transform: translateX(-50%); text-align: center }
+.osd .bc { left: 50%; bottom: 5%; transform: translateX(-50%); text-align: center }
+.osd .row { line-height: 1.55 }
+.osd .dim { opacity: .65 }
+.osd .acc { color: var(--accent) } .osd .warn { color: var(--warn) } .osd .bad { color: var(--danger) }
+.osd .blink { animation: osd-blink 1s steps(2, start) infinite }
+@keyframes osd-blink { to { visibility: hidden } }
+.cross { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); opacity: .9 }
+.msg { position: absolute; left: 50%; top: 32%; transform: translateX(-50%); font-family: var(--font); font-weight: 800;
+  font-size: clamp(20px, 3vw, 40px); letter-spacing: .02em; text-align: center; text-shadow: 0 2px 20px rgba(0, 0, 0, .7); transition: opacity .25s }
+.msg small { display: block; font-size: .45em; font-weight: 600; color: var(--mute); margin-top: 8px; letter-spacing: .05em }
+.toast { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); font-family: var(--mono); font-weight: 700; font-size: clamp(16px, 2vw, 28px);
+  color: var(--accent); text-shadow: 0 0 10px rgba(0, 0, 0, .8); transition: opacity .3s }
+.debug { position: absolute; left: 3%; top: 22%; font-family: var(--mono); font-size: 12px; line-height: 1.6; background: rgba(0, 0, 0, .45);
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); white-space: pre }
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: auto;
+  background: radial-gradient(120% 90% at 70% 40%, rgba(7, 9, 12, .35), rgba(7, 9, 12, .92)); backdrop-filter: blur(6px) }
+.card { width: min(980px, 94vw); max-height: 92vh; overflow: auto; padding: clamp(20px, 3vw, 40px); border-radius: 22px; background: var(--panel);
+  border: 1px solid var(--line); box-shadow: 0 30px 90px rgba(0, 0, 0, .5); backdrop-filter: blur(18px) }
+.logo { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: .32em; font-size: 13px }
+.logo i { width: 28px; height: 28px; border-radius: 8px; background: var(--accent); display: grid; place-items: center; color: var(--accent-ink); font-style: normal }
+.h1 { font-size: clamp(30px, 4.5vw, 56px); font-weight: 800; letter-spacing: -.03em; line-height: 1; margin: 22px 0 8px }
+.sub { color: var(--mute); font-size: 15px; line-height: 1.5 }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 28px; margin: 26px 0 }
+.k { display: flex; justify-content: space-between; gap: 14px; font-size: 14px; padding: 7px 0; border-bottom: 1px solid var(--line); color: var(--mute) }
+.k b { color: var(--text); font-weight: 700 }
+kbd { font-family: var(--mono); font-size: 12px; padding: 2px 7px; border: 1px solid rgba(255, 255, 255, .22); border-radius: 6px; color: var(--text); background: rgba(255, 255, 255, .04) }
+.btns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center }
+.btn { pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; height: 50px; padding: 0 26px; border-radius: 14px; border: 0;
+  font: 800 15px var(--font); background: var(--accent); color: var(--accent-ink); box-shadow: 0 10px 40px rgba(200, 255, 46, .22) }
+.btn.ghost { background: transparent; color: var(--text); border: 1px solid rgba(255, 255, 255, .18); box-shadow: none }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .16); font-size: 12px; color: var(--mute) }
+.loading { font-family: var(--mono); color: var(--mute); font-size: 13px; margin-top: 14px }
+.hidden { display: none !important }
+
+/* ---- touch controls (phones / tablets) ---- */
+body { touch-action: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent }
+.touch { position: absolute; inset: 0; pointer-events: none; --tops: .55;
+  --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px); --st: env(safe-area-inset-top, 0px) }
+.tzone { position: absolute; top: 22%; bottom: 0; pointer-events: auto; touch-action: none }
+.tzone.l { left: 0; right: 50% } .tzone.r { left: 50%; right: 0 }
+.tstick { position: absolute; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, .5); background: rgba(10, 14, 20, .18);
+  opacity: var(--tops); pointer-events: none; transition: opacity .15s }
+.tstick.on { opacity: calc(var(--tops) + .25) }
+.tcross { position: absolute; inset: 14%; background: linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)) center / 1.5px 100% no-repeat,
+  linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)) center / 100% 1.5px no-repeat }
+.tknob { position: absolute; left: 0; top: 0; border-radius: 50%; background: #e9edf1; box-shadow: 0 4px 18px rgba(0, 0, 0, .45) }
+.tbtn { position: absolute; pointer-events: auto; touch-action: none; height: 44px; min-width: 44px; padding: 0 16px; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .28); background: rgba(10, 14, 20, .45); color: var(--text); font: 800 14px var(--font);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px) }
+.tbtn.icon { padding: 0; width: 44px; font-size: 18px }
+.tbtn:active { background: rgba(200, 255, 46, .25) }
+.tl1 { left: calc(2.5% + var(--sl)); top: calc(3.5% + var(--st)) } .tl2 { left: calc(2.5% + var(--sl)); top: calc(3.5% + var(--st) + 54px) }
+.tl3 { left: calc(2.5% + var(--sl) + 128px); top: calc(3.5% + var(--st) + 54px) }
+.tr1 { right: calc(2.5% + var(--sr)); top: calc(3.5% + var(--st)) } .tr2 { right: calc(2.5% + var(--sr)); top: calc(3.5% + var(--st) + 54px) }
+.tarm { position: absolute; left: 50%; top: calc(3% + var(--st)); transform: translateX(-50%); width: min(300px, 34vw); height: 44px;
+  border-radius: 999px; border: 1px solid rgba(255, 255, 255, .3); background: rgba(10, 14, 20, .5); pointer-events: auto; touch-action: none;
+  display: flex; align-items: center; justify-content: center; font: 800 11px var(--mono); letter-spacing: .14em; color: var(--mute) }
+.tarm i { position: absolute; left: 4px; top: 4px; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); transition: transform .2s }
+.tarm.armed { border-color: var(--accent); color: var(--accent); background: rgba(200, 255, 46, .12) }
+.tarm.armed i { opacity: 0 }
+.touch.editing .tzone, .touch.editing .tbtn, .touch.editing .tarm { opacity: .25; pointer-events: none }
+.touch.editing .tstick { pointer-events: auto; opacity: 1; border-style: dashed; border-color: var(--accent) }
+.tedit { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: auto }
+.tedit-card { display: flex; flex-direction: column; gap: 10px; width: min(300px, 40vw); padding: 16px 18px; border-radius: 18px;
+  background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(14px); font-size: 13px }
+.tedit-card .dim { color: var(--mute); font-size: 12px }
+.tedit-card label { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--mute) }
+.tedit-card label.chk { justify-content: flex-start }
+.tedit-card input[type=range] { width: 55%; accent-color: var(--accent) }
+.tedit-card input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent) }
+.tedit-card .row { display: flex; gap: 8px; justify-content: flex-end } .tedit-card .btn { height: 40px; padding: 0 16px }
+/* OSD moves out of the way of the sticks and buttons */
+body.touch .osd { font-size: clamp(11px, 1.6vh + .4vw, 16px) }
+body.touch .osd .tl { left: calc(2.5% + 56px + var(--sl, 0px)); top: 4% }
+body.touch .osd .tr { right: calc(2.5% + 110px); top: 4% }
+body.touch .osd .tc { top: calc(4% + 54px) }
+body.touch .osd .bl { left: calc(2.5% + 4px); top: 28%; bottom: auto }
+body.touch .osd .br { right: calc(2.5% + 4px); top: 28%; bottom: auto }
+body.touch .osd .bc { bottom: 3% }
+body.touch .msg { top: 26% }
+body.touch .card { max-height: 94vh; padding: 18px 22px }
+body.touch .h1 { margin: 12px 0 6px; font-size: clamp(26px, 6vh, 44px) }
+.select { height: 50px; border-radius: 14px; padding: 0 14px; background: rgba(255, 255, 255, .06); color: var(--text); border: 1px solid rgba(255, 255, 255, .18); font: 700 14px var(--font) }
+body.touch .btns { margin: 14px 0 2px } body.touch .grid { margin: 12px 0 } body.touch .k { padding: 4px 0; font-size: 13px }
+body.touch .sub { font-size: 13px }
+.tr3 { right: calc(2.5% + var(--sr) + 52px); top: calc(3.5% + var(--st) + 108px) }
+.tdet { right: calc(2.5% + var(--sr)); top: calc(3.5% + var(--st) + 108px); height: 52px; padding: 0 18px; border-color: rgba(255, 77, 94, .7);
+  background: rgba(120, 10, 20, .55); color: #ffd7db; letter-spacing: .08em; box-shadow: 0 0 18px rgba(255, 77, 94, .35) }
+.tdet b { color: var(--danger); font-size: 18px; margin-right: 4px }
+.tdet:active { background: rgba(255, 77, 94, .6) } .tr4 { right: calc(2.5% + var(--sr)); top: calc(3.5% + var(--st) + 108px) }
+
+/* academy: transmitter sticks (Mode 2) */
+.osd .sticks { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); display: flex; gap: clamp(44px, 7vw, 96px); pointer-events: none }
+.osd .sticks .gim { position: relative; width: clamp(64px, 8vw, 104px); aspect-ratio: 1; border-radius: 14px; border: 2px solid rgba(255, 255, 255, .35); background: rgba(8, 12, 16, .35) }
+.osd .sticks .gim::before, .osd .sticks .gim::after { content: ''; position: absolute; background: rgba(255, 255, 255, .18) }
+.osd .sticks .gim::before { left: 50%; top: 8%; bottom: 8%; width: 1px } .osd .sticks .gim::after { top: 50%; left: 8%; right: 8%; height: 1px }
+.osd .sticks .gim i { position: absolute; left: calc(50% - 9px); top: calc(50% - 9px); width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px rgba(0, 0, 0, .5) }
+.osd .sticks .gim span { position: absolute; left: 50%; top: calc(100% + 6px); transform: translateX(-50%); font-size: 10px; opacity: .7; white-space: nowrap }
+.osd .sticks .gim.hl { border-color: var(--accent); box-shadow: 0 0 18px rgba(200, 255, 46, .35) } .osd .sticks .gim.hl i { background: var(--accent) }
+
+/* ---- OSD energy gauge (battery / fuel), kamikaze charge, blast flash, lost video ---- */
+.energy { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 8px 14px 8px 8px; border-radius: 14px; width: max-content;
+  background: linear-gradient(135deg, rgba(10, 14, 20, .6), rgba(10, 14, 20, .22)); border: 1px solid rgba(255, 255, 255, .12);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); text-shadow: none; --ec: var(--accent); transition: border-color .3s }
+.energy.fuel { --ec: var(--cyan) }
+.energy.warn { --ec: var(--warn) } .energy.bad { --ec: var(--danger); border-color: rgba(255, 77, 94, .55) }
+.eicon { width: 2.1em; height: 2.1em; border-radius: 10px; display: grid; place-items: center; color: var(--ec);
+  background: color-mix(in srgb, var(--ec) 16%, transparent); box-shadow: 0 0 14px color-mix(in srgb, var(--ec) 30%, transparent); transition: color .3s }
+.eicon svg { width: 62%; height: 62%; filter: drop-shadow(0 0 4px var(--ec)) }
+.ebody { display: flex; flex-direction: column; gap: 4px }
+.egauge { display: flex; align-items: center }
+.esegs { display: flex; gap: 3px; padding: 3px; border: 2px solid rgba(255, 255, 255, .8); border-radius: 6px; background: rgba(0, 0, 0, .25) }
+.esegs i { width: clamp(7px, .8vw, 12px); height: clamp(13px, 1.35vw, 19px); border-radius: 2px; background: rgba(255, 255, 255, .07); transition: background .3s }
+.esegs i.on { background: linear-gradient(180deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, 0) 55%), var(--ec); box-shadow: 0 0 8px color-mix(in srgb, var(--ec) 70%, transparent) }
+.enub { width: 4px; height: 40%; min-height: 8px; background: rgba(255, 255, 255, .8); border-radius: 0 3px 3px 0 }
+.energy.fuel .enub { display: none } .energy.fuel .esegs { border-radius: 4px 12px 12px 4px }
+.energy.bad .esegs i.on { animation: osd-blink .8s steps(2, start) infinite }
+.einfo { display: flex; align-items: baseline; gap: 9px; line-height: 1 }
+.epct { font-size: 1.3em; color: var(--ec); text-shadow: 0 0 10px color-mix(in srgb, var(--ec) 45%, transparent) }
+.esub { font-size: .7em; opacity: .85 }
+.emeta { font-size: .64em; opacity: .62; line-height: 1 }
+.chg { margin-top: 10px; display: inline-flex; flex-direction: column; gap: 2px; padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .25);
+  background: rgba(10, 14, 20, .45); font-size: .78em; letter-spacing: .06em; text-shadow: none }
+.chg b { color: var(--mute); margin-right: 4px }
+.chg small { font-size: .72em; opacity: .6; font-weight: 600; letter-spacing: .02em }
+.chg.live { border-color: var(--danger); color: #ffd7db; background: rgba(120, 10, 20, .45); animation: chg-pulse 1.1s ease-in-out infinite }
+.chg.live b { color: var(--danger) }
+@keyframes chg-pulse { 0%, 100% { box-shadow: 0 0 18px rgba(255, 77, 94, .45) } 50% { box-shadow: 0 0 4px rgba(255, 77, 94, .1) } }
+.osd::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: var(--flash, 0);
+  background: radial-gradient(circle at 50% 55%, #fffbe8, #ffc070 40%, rgba(255, 120, 40, .35) 75%, rgba(255, 120, 40, 0)) }
+.nosig:not(.hidden) ~ .cross { display: none }
+.nosig { position: absolute; inset: 0; background: #0d0f12; display: grid; place-items: center; overflow: hidden }
+.nsnoise { position: absolute; inset: -50%; opacity: .6; animation: ns-shift .14s steps(4) infinite;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>") }
+@keyframes ns-shift { 0% { transform: translate(0, 0) } 25% { transform: translate(-7%, 4%) } 50% { transform: translate(5%, -6%) } 75% { transform: translate(-3%, 8%) } }
+.nstext { position: relative; font-size: clamp(28px, 5vw, 64px); letter-spacing: .22em; text-align: center; color: #fff }
+.nstext small { display: block; margin-top: 8px; font-size: .28em; letter-spacing: .16em; opacity: .7 }

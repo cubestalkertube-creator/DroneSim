@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DroneSim</string>
+    <string name="title_activity_main">DroneSim</string>
+    <string name="package_name">com.dronesim.app</string>
+    <string name="custom_url_scheme">com.dronesim.app</string>
+</resources>

@@ -1,0 +1,7 @@
+{
+  "appId": "com.dronesim.app",
+  "appName": "DroneSim",
+  "webDir": "dist",
+  "backgroundColor": "#07090c",
+  "android": { "allowMixedContent": false, "captureInput": false, "webContentsDebuggingEnabled": true }
+}
