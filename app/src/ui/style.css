@@ -10,21 +10,94 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .osd { position: absolute; inset: 0; font-family: var(--mono); font-weight: 700; font-size: clamp(12px, 1.35vw, 19px);
   color: #fff; text-shadow: 0 0 2px #000, 0 0 6px rgba(0, 0, 0, .85) }
 .osd .p { position: absolute; white-space: nowrap }
-.osd .tl { left: 3%; top: 4% } .osd .tr { right: 3%; top: 4%; text-align: right }
-.osd .bl { left: 3%; bottom: 5% } .osd .br { right: 3%; bottom: 5%; text-align: right }
-.osd .tc { left: 50%; top: 4%; transform: translateX(-50%); text-align: center }
-.osd .bc { left: 50%; bottom: 5%; transform: translateX(-50%); text-align: center }
+.osd .tl { left: 2.6%; top: 4% } .osd .tr { right: 2.6%; top: 4%; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px }
+.osd .bl { left: 2.6%; bottom: 4.5% } .osd .br { right: 2.6%; bottom: 4.5%; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px }
+.osd .tc { left: 50%; top: 3.5%; transform: translateX(-50%); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px }
+.osd .bc { left: 50%; bottom: 4.5%; transform: translateX(-50%); text-align: center }
+.osd .lm { left: 2.6%; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 14px }
+.osd .rm { right: 2.6%; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: right }
 .osd .row { line-height: 1.55 }
 .osd .dim { opacity: .65 }
 .osd .acc { color: var(--accent) } .osd .warn { color: var(--warn) } .osd .bad { color: var(--danger) }
 .osd .blink { animation: osd-blink 1s steps(2, start) infinite }
 @keyframes osd-blink { to { visibility: hidden } }
-.cross { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); opacity: .9 }
-.msg { position: absolute; left: 50%; top: 32%; transform: translateX(-50%); font-family: var(--font); font-weight: 800;
+/* glass plate under gauges (the OSD text itself stays a shadowed overlay like a real FPV feed) */
+.osd .glass { background: linear-gradient(160deg, rgba(10, 14, 20, .58), rgba(10, 14, 20, .26)); border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 14px; backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); text-shadow: none }
+/* status: mode chip + arm pill */
+.osd .hstat { display: flex; gap: 8px; align-items: center }
+.osd .mode { --mc: var(--accent); padding: .32em .7em; border-radius: 9px; font-size: .92em; letter-spacing: .08em; color: var(--accent-ink);
+  background: var(--mc); box-shadow: 0 0 18px color-mix(in srgb, var(--mc) 45%, transparent); text-shadow: none }
+.osd .mode[data-tone=level] { --mc: var(--cyan) } .osd .mode[data-tone=auto] { --mc: var(--warn) }
+.osd .arm { display: inline-flex; align-items: center; gap: .45em; padding: .3em .7em; border-radius: 9px; font-size: .78em; letter-spacing: .1em;
+  color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 55%, transparent); background: rgba(10, 14, 20, .45); text-shadow: none }
+.osd .arm i { width: .55em; height: .55em; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor }
+.osd .arm.on { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 60%, transparent) }
+.osd .arm.on i { animation: arm-pulse 1.2s ease-in-out infinite }
+@keyframes arm-pulse { 50% { opacity: .35 } }
+.osd .dev { margin-top: 8px; font-size: .66em; opacity: .7; font-weight: 600 }
+/* flight timer */
+.osd .timer { display: flex; align-items: baseline; gap: .55em; padding: .35em .9em; border-radius: 12px }
+.osd .timer small { font-size: .55em; letter-spacing: .16em; opacity: .55 }
+.osd .timer b { font-size: 1.12em; letter-spacing: .04em; opacity: .7 }
+.osd .timer.live b { opacity: 1 }
+.osd .warns { display: flex; flex-direction: column; gap: 6px; align-items: center }
+.osd .pill { padding: .3em .85em; border-radius: 9px; font-size: .86em; letter-spacing: .08em; text-shadow: none;
+  background: rgba(40, 24, 0, .55); border: 1px solid color-mix(in srgb, currentColor 60%, transparent) }
+.osd .pill.bad { background: rgba(70, 6, 14, .6) }
+.osd .chip { padding: .28em .75em; border-radius: 999px; font-size: .74em; letter-spacing: .06em; border: 1px solid rgba(255, 255, 255, .22);
+  background: rgba(10, 14, 20, .42); text-shadow: none }
+.osd .perf { font-size: .6em; opacity: .5; font-weight: 600 }
+/* throttle bar + big readouts */
+.osd .thr { display: flex; align-items: flex-end; gap: 8px }
+.osd .thr .bar { position: relative; width: 10px; height: clamp(110px, 22vh, 190px); border-radius: 6px; overflow: hidden;
+  background: rgba(10, 14, 20, .45); border: 1px solid rgba(255, 255, 255, .25); box-shadow: 0 0 6px rgba(0, 0, 0, .5) }
+.osd .thr .bar i { position: absolute; inset: 0; transform-origin: bottom; transform: scaleY(0);
+  background: linear-gradient(0deg, var(--cyan), var(--accent)); box-shadow: 0 0 12px rgba(200, 255, 46, .5) }
+.osd .thr.hot .bar i { background: linear-gradient(0deg, var(--accent), var(--warn)) }
+.osd .thr .tick { position: absolute; left: -2px; right: -2px; bottom: 50%; height: 1px; background: rgba(255, 255, 255, .45) }
+.osd .thr .lbl { display: flex; flex-direction: column; line-height: 1 }
+.osd .thr .lbl b { font-size: .95em } .osd .thr .lbl small, .osd .readout small { font-size: .52em; letter-spacing: .16em; opacity: .65; margin-top: 4px }
+.osd .readout { display: flex; flex-direction: column; line-height: .95 }
+.osd .readout b { font-size: 2.1em; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums }
+.osd .rm .readout { align-items: flex-end }
+.osd .vario { display: inline-flex; align-items: center; gap: .4em; font-size: .7em; opacity: .75 }
+.osd .vario i { width: 0; height: 0; border-left: .38em solid transparent; border-right: .38em solid transparent; border-bottom: .55em solid currentColor; opacity: .3; transition: transform .2s }
+.osd .vario.up i { opacity: 1; color: var(--accent) } .osd .vario.down i { opacity: 1; color: var(--warn); transform: rotate(180deg) }
+/* GPS nav line, mini sticks */
+.osd .nav { padding: .4em .8em; font-size: .72em; border-radius: 10px }
+.osd .rc { display: flex; gap: 8px }
+.osd .rc .gim { position: relative; width: clamp(40px, 4.2vw, 56px); aspect-ratio: 1; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .28);
+  background: rgba(10, 14, 20, .35) }
+.osd .rc .gim::before, .osd .rc .gim::after { content: ''; position: absolute; background: rgba(255, 255, 255, .16) }
+.osd .rc .gim::before { left: 50%; top: 12%; bottom: 12%; width: 1px } .osd .rc .gim::after { top: 50%; left: 12%; right: 12%; height: 1px }
+.osd .rc .gim i { position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 8px rgba(200, 255, 46, .7) }
+.osd .compact { display: none }
+/* race panel */
+.osd .lap { padding: .45em 1.1em .5em; display: flex; flex-direction: column; align-items: center; gap: 2px }
+.osd .lap .lrow { display: flex; align-items: baseline; gap: .7em }
+.osd .lap .lg { font-size: .72em; letter-spacing: .1em; color: var(--accent) }
+.osd .lap .lt { font-size: 1.25em; font-variant-numeric: tabular-nums }
+.osd .lap .ld:empty, .osd .lap .lmiss:empty { display: none }
+.osd .lap .lmiss { font-size: .7em; color: var(--warn) }
+.osd .lap .lsub { font-size: .62em; opacity: .6 }
+/* FPV crosshair + artificial horizon */
+.cross { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); opacity: .9; filter: drop-shadow(0 0 2px #000) }
+.hz { position: absolute; left: 50%; top: 50%; width: min(36vw, 520px); height: 0; pointer-events: none }
+.hz i { position: absolute; top: -1px; height: 2px; width: 38%; background: rgba(255, 255, 255, .85); box-shadow: 0 0 3px #000 }
+.hz .hzl { left: 0 } .hz .hzr { right: 0 }
+.hz i::after { content: ''; position: absolute; top: 0; width: 2px; height: 9px; background: inherit }
+.hz .hzl::after { left: 0 } .hz .hzr::after { right: 0 }
+.msg { position: absolute; left: 50%; top: 30%; transform: translateX(-50%); font-family: var(--font); font-weight: 800;
   font-size: clamp(20px, 3vw, 40px); letter-spacing: .02em; text-align: center; text-shadow: 0 2px 20px rgba(0, 0, 0, .7); transition: opacity .25s }
-.msg small { display: block; font-size: .45em; font-weight: 600; color: var(--mute); margin-top: 8px; letter-spacing: .05em }
-.toast { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); font-family: var(--mono); font-weight: 700; font-size: clamp(16px, 2vw, 28px);
-  color: var(--accent); text-shadow: 0 0 10px rgba(0, 0, 0, .8); transition: opacity .3s }
+.msg small { display: inline-block; font-size: .42em; font-weight: 700; color: #e9edf1; margin-top: 8px; letter-spacing: .03em; padding: .55em 1.1em;
+  border-radius: 999px; background: rgba(10, 14, 20, .5); border: 1px solid rgba(255, 255, 255, .14); backdrop-filter: blur(6px); text-shadow: none }
+.toast { position: absolute; left: 50%; top: 17%; transform: translate(-50%, -6px) scale(.96); font-family: var(--mono); font-weight: 700; font-size: clamp(15px, 1.8vw, 26px);
+  color: var(--accent); padding: .35em .9em; border-radius: 12px; background: rgba(10, 14, 20, .5); border: 1px solid rgba(200, 255, 46, .3);
+  backdrop-filter: blur(6px); text-shadow: 0 0 10px rgba(0, 0, 0, .6); opacity: 0; transition: opacity .25s, transform .25s }
+.toast.show { opacity: 1; transform: translate(-50%, 0) scale(1) }
+.toast:empty { display: none }
 .debug { position: absolute; left: 3%; top: 22%; font-family: var(--mono); font-size: 12px; line-height: 1.6; background: rgba(0, 0, 0, .45);
   padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); white-space: pre }
 .overlay { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: auto;
@@ -150,3 +223,7 @@ body.touch .sub { font-size: 13px }
 @keyframes ns-shift { 0% { transform: translate(0, 0) } 25% { transform: translate(-7%, 4%) } 50% { transform: translate(5%, -6%) } 75% { transform: translate(-3%, 8%) } }
 .nstext { position: relative; font-size: clamp(28px, 5vw, 64px); letter-spacing: .22em; text-align: center; color: #fff }
 .nstext small { display: block; margin-top: 8px; font-size: .28em; letter-spacing: .16em; opacity: .7 }
+/* new HUD on phones: no side readouts / mini sticks (the touch sticks own the screen edges), one compact line */
+body.touch .osd .lm, body.touch .osd .rm, body.touch .osd .rc, body.touch .osd .dev { display: none }
+body.touch .osd .compact { display: block; padding: .3em .7em; border-radius: 9px; background: rgba(10, 14, 20, .4); text-shadow: none }
+body.touch .osd .tr { gap: 4px }

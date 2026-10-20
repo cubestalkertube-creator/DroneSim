@@ -3,7 +3,7 @@
 // (time, collisions, altitude RMSE, battery, lesson-specific values) and grades the result in stars.
 // Pure game logic (three.js math only, no rendering / DOM) — tested in test/academy.test.ts.
 import * as THREE from 'three';
-import type { MapLayout, QuatT } from '../../sim/layout';
+import { groundHeight, type MapLayout, type QuatT } from '../../sim/layout';
 import { TrickDetector, type TrickEvent } from './tricks';
 
 export interface LessonFrame {
@@ -277,15 +277,4 @@ export function gateQuat(dirX: number, dirZ: number): THREE.Quaternion {
   return new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(-dirX, -dirZ));
 }
 export const quatT = (q: QuatT) => new THREE.Quaternion(q[0], q[1], q[2], q[3]);
-
-/** ground height from the map heightfield (bilinear), 0 without terrain */
-export function groundHeight(layout: MapLayout, x: number, z: number): number {
-  const t = layout.terrain;
-  if (!t) return 0;
-  const n = t.res + 1, h = t.heights_rowmajor_blenderY;
-  const fi = Math.max(0, Math.min(t.res, ((x + t.size / 2) / t.size) * t.res));
-  const fj = Math.max(0, Math.min(t.res, ((t.size / 2 - z) / t.size) * t.res));
-  const i = Math.min(t.res - 1, Math.floor(fi)), j = Math.min(t.res - 1, Math.floor(fj)), u = fi - i, v = fj - j;
-  const at = (a: number, b: number) => h[b * n + a];
-  return (at(i, j) * (1 - u) + at(i + 1, j) * u) * (1 - v) + (at(i, j + 1) * (1 - u) + at(i + 1, j + 1) * u) * v;
-}
+export { groundHeight };

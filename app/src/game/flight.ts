@@ -125,6 +125,7 @@ export async function runFlight(cfg: LaunchConfig, presets: DronePreset[]) {
     view.load(preset.model, over.uptilt ?? preset.camera.uptilt_deg ?? 30),
     ghostView?.load(preset.model, 0),
   ]);
+  boxes.push(...rw.outerBoxes); // buildings and trees around the map
   if (preset.warhead && !preset.aero) view.addCharge(preset.frame.wheelbase ?? 0.3);
   rw.scene.add(view.root);
   const ghostMats = ghostView ? ghostify(ghostView.root) : [];
@@ -560,7 +561,8 @@ export async function runFlight(cfg: LaunchConfig, presets: DronePreset[]) {
       charge: preset.warhead && !s.blast ? { live: s.fuse, key: input.device === 'touch' ? '✸ ПОДРЫВ' : input.device === 'gamepad' ? 'RB' : input.device === 'rc' ? 'тумблер / E' : 'E' } : null,
       speedKmh: Math.hypot(v.x, v.y, v.z) * 3.6, flightTime, camera: gimbal && rig.mode === 'fpv' ? `Подвес ${rig.gimbalPitch}°` : CAM_LABEL[rig.mode],
       device: input.device === 'gamepad' || input.device === 'rc' ? `${DEVICE_LABEL[input.device]} · ${input.gamepadName}${input.calibrated ? '' : ' (по умолч.)'}` : DEVICE_LABEL[input.device],
-      fps, simHz, fpv: rig.mode === 'fpv',
+      fps, simHz, fpv: rig.mode === 'fpv' && !s.blast, vs: v.y, horizon: horizonOf(cam),
+      rc: input.device !== 'touch' && !(lesson?.showSticks) ? input.sticks : null,
       lap: race.active && (raceMode || !plane) && !runner ? {
         next: race.next, total: race.total, current: race.lapStart >= 0 ? s.time - race.lapStart : 0, last: race.lastLap, best: race.best,
         delta: s.time - race.lastDeltaAt < 3 ? race.lastDelta : null, missed: race.missed, penalty: race.penalty,
@@ -612,6 +614,14 @@ export async function runFlight(cfg: LaunchConfig, presets: DronePreset[]) {
   if (import.meta.env.DEV) {
     Object.assign(window, { __ds: { blast: () => blast, ghost: () => ghost, ghostView, sim, host: sim.kind === 'local' ? (sim as unknown as { host: unknown }).host : null, input, rig, race, view, rw, start, reset, pause, lesson: runner, ratesFromCli, ratesToCli, quality, audio } });
   }
+}
+
+const hzF = new THREE.Vector3(), hzU = new THREE.Vector3(), hzR = new THREE.Vector3();
+/** artificial horizon for the OSD: screen roll of the horizon line and its offset from the centre (rectilinear camera) */
+function horizonOf(cam: THREE.PerspectiveCamera): { roll: number; off: number } {
+  hzF.set(0, 0, -1).applyQuaternion(cam.quaternion); hzU.set(0, 1, 0).applyQuaternion(cam.quaternion); hzR.set(1, 0, 0).applyQuaternion(cam.quaternion);
+  const pitch = Math.asin(THREE.MathUtils.clamp(hzF.y, -1, 1));
+  return { roll: (Math.atan2(hzR.y, hzU.y) * 180) / Math.PI, off: Math.tan(pitch) / Math.tan((cam.fov * Math.PI) / 360) };
 }
 
 const GHOST_ALPHA = 0.55;

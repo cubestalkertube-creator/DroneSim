@@ -13,3 +13,5 @@ app/android/app/src/main/assets/public/
 app/android/.gradle/
 app/android/build/
 __pycache__/
+
+.playwright-mcp/

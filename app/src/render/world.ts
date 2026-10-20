@@ -4,6 +4,9 @@ import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import type { MapLayout } from '../sim/layout';
 import type { Quality } from './quality';
+import { SkyDome, acesToneMap, horizonColor } from './sky';
+import { buildSurroundings, fogDensity, overgrowFor, type OuterBox } from './surroundings';
+import { NATURAL_GROUND, groundVariation, setGroundBlend } from './groundShader';
 
 /** relative so the same build works from a web server root and from the Capacitor WebView */
 export const ASSET_URL = './assets/';
@@ -36,6 +39,9 @@ export class RenderWorld {
   private texCache = new Map<string, THREE.Texture>();
   private matCache = new Map<string, THREE.MeshStandardMaterial>();
   maxAniso = 1;
+  sky: SkyDome | null = null;
+  /** colliders of the buildings / trees around the map (filled by loadMap) */
+  readonly outerBoxes: OuterBox[] = [];
 
   constructor(canvas: HTMLCanvasElement, readonly quality: Quality) {
     texRes = quality.tex;
@@ -62,14 +68,18 @@ export class RenderWorld {
   async loadEnvironment(L: MapLayout) {
     const hdr = await new HDRLoader().loadAsync(ASSET_URL + 'hdri/' + L.env.hdri);
     hdr.mapping = THREE.EquirectangularReflectionMapping;
-    this.scene.background = hdr;
     this.scene.environment = hdr;
     this.scene.environmentIntensity = 0.85;
     const d = L.env.sun.dir;
     this.sunDir.set(d[0], d[1], d[2]).normalize();
     this.sun.intensity = L.env.sun.intensity;
-    const f = L.env.fog;
-    this.scene.fog = new THREE.FogExp2(new THREE.Color(f.color[0], f.color[1], f.color[2]), f.density);
+    // fog takes the sky's own colour at the horizon (tone-mapped: three applies fog after tone mapping), and the
+    // sky dome fades into it, so the far land dissolves into the sky without a line
+    const fog = acesToneMap(horizonColor(hdr), this.renderer.toneMappingExposure);
+    this.scene.fog = new THREE.FogExp2(fog, fogDensity(L));
+    this.sky = new SkyDome(hdr, fog);
+    this.scene.background = null;
+    this.scene.add(this.sky.mesh);
   }
 
   /** keep the shadow frustum centred on the drone */
@@ -104,6 +114,7 @@ export class RenderWorld {
         normalMap: this.texture(`${base}_nor_gl_${r}.jpg`, false),
         aoMap: arm, roughnessMap: arm, metalnessMap: arm, roughness: 1, metalness: 1, aoMapIntensity: 0.8,
       });
+      if (NATURAL_GROUND.test(tex)) groundVariation(m);
       this.matCache.set(tex, m);
     }
     return m;
@@ -122,24 +133,12 @@ export class RenderWorld {
       mesh.receiveShadow = true;
       mesh.castShadow = !ground;
     });
+    const og = overgrowFor(L);
+    if (og) setGroundBlend(this.pbrMaterial(og.tex), this.pbrMaterial(og.ground).map!, og.tile, og.from, og.to);
     this.scene.add(root);
-    this.addFarGround(L);
+    // hills, far range, forest / city around the map instead of an empty plane
+    this.scene.add(buildSurroundings(this, L, { low: this.quality.id === 'low', boxes: this.outerBoxes }));
     return root;
-  }
-
-  /** Huge ground plane under/around the map so the horizon is never the edge of the world. */
-  private addFarGround(L: MapLayout) {
-    const tex = Object.values(L.materials).map((m) => m.tex).find((t) => t && /grass|mud|dirt|gravel|ground/i.test(t));
-    const size = 12000, tile = 4;
-    const geo = new THREE.PlaneGeometry(size, size, 1, 1);
-    geo.rotateX(-Math.PI / 2);
-    const uv = geo.attributes.uv as THREE.BufferAttribute;
-    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (size / tile), uv.getY(i) * (size / tile));
-    const mat = tex ? this.pbrMaterial(tex) : new THREE.MeshStandardMaterial({ color: 0x55603f, roughness: 1 });
-    const ground = new THREE.Mesh(geo, mat);
-    ground.position.y = -1.0; // map terrain never dips below -0.6 m
-    ground.receiveShadow = true;
-    this.scene.add(ground);
   }
 
   /** Instantiate Poly Haven props; returns world-space boxes for colliders. */

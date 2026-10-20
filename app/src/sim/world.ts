@@ -6,10 +6,11 @@ import type { MapLayout } from './layout';
 import { DEG, q4, qmul, quatFromAxisAngle, rotate, v3, type Q4, type V3 } from './math';
 import type { DronePreset } from './presets';
 import { WindField } from './wind';
+import { OUTER_FAR, OUTER_NEAR, outerGrid, outerSpec } from './outer';
 
 export const SIM_DT = 1 / 1000;
 export const GRAVITY = 9.80665;
-/** ground outside the map (fixed wings fly kilometres): matches the render backdrop plane at y = -1 */
+/** last-resort floor beyond the outer land grids (sim/outer.ts) */
 const FAR_GROUND_HALF = 20000, FAR_GROUND_TOP = -1;
 
 let rapierReady: Promise<void> | null = null;
@@ -78,6 +79,13 @@ export class SimWorld {
     }
     if (L.terrain) {
       this.world.createCollider(heightfieldDesc(L.terrain.size, L.terrain.res, L.terrain.heights_rowmajor_blenderY));
+      // the land around the map (hills, far range): a fine grid near the map and a coarse one out to the far range
+      const o = outerSpec(L);
+      for (const [g, hole, y] of [[OUTER_NEAR, o.half, -50], [OUTER_FAR, OUTER_NEAR.half, -60]] as const) {
+        const res = Math.round((2 * g.half) / g.cell);
+        const hf = outerGrid(o, 2 * g.half, res, hole, y);
+        this.world.createCollider(RAPIER.ColliderDesc.heightfield(res, res, hf, { x: 2 * g.half, y: 1, z: 2 * g.half }).setFriction(0.9).setRestitution(0.1));
+      }
       this.addStaticBox({ x: 0, y: FAR_GROUND_TOP - 0.5, z: 0 }, { x: FAR_GROUND_HALF, y: 0.5, z: FAR_GROUND_HALF });
     } else this.addStaticBox({ x: 0, y: -0.5, z: 0 }, { x: FAR_GROUND_HALF, y: 0.5, z: FAR_GROUND_HALF });
     this.world.step(); // builds the broad-phase so ray queries work before the first simulation step
