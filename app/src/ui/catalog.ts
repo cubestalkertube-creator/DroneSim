@@ -4,20 +4,23 @@ import type { DronePreset } from '../sim/presets';
 
 export interface MapInfo {
   id: string; name: string; blurb: string; tags: MapTag[]; difficulty: number; weather: string;
-  /** in the shipped builds (vite.config SHIPPED_MAPS); the others load in dev only (heavy props) */
+  /** in this build (vite.config SHIPPED_MAPS / MOBILE_MAPS); the others load in dev only */
   shipped: boolean;
 }
+declare const __SHIPPED_MAPS__: string[];
+const IN_BUILD: string[] | null = typeof __SHIPPED_MAPS__ !== 'undefined' ? __SHIPPED_MAPS__ : null;
 export type MapTag = 'open' | 'bando' | 'city' | 'track';
 export const MAP_TAGS: { id: MapTag | 'all'; label: string }[] = [
   { id: 'all', label: 'Все' }, { id: 'open', label: 'Открытые' }, { id: 'bando', label: 'Бандо' }, { id: 'city', label: 'Город' }, { id: 'track', label: 'Трассы' },
 ];
 
-export const MAPS: MapInfo[] = [
+const MAP_LIST: MapInfo[] = [
   { id: 'training_field', name: 'Полигон', blurb: 'Поле 500×500 м · ВПП · 10 ворот · ангар', tags: ['open', 'track'], difficulty: 1, weather: 'Ясно', shipped: true },
   { id: 'parking_garage', name: 'Паркинг', blurb: '5 уровней · пандусы · колонны', tags: ['bando', 'city'], difficulty: 2, weather: 'Пасмурно', shipped: true },
   { id: 'abandoned_factory', name: 'Заброшенный завод', blurb: 'Цех · труба 50 м · дырявая крыша', tags: ['bando'], difficulty: 3, weather: 'Закат', shipped: false },
   { id: 'ruined_district', name: 'Разрушенный квартал', blurb: 'Панельки · обрушения · дворы', tags: ['city', 'bando'], difficulty: 4, weather: 'Пыль', shipped: false },
 ];
+export const MAPS: MapInfo[] = MAP_LIST.map((m) => ({ ...m, shipped: IN_BUILD ? IN_BUILD.includes(m.id) : m.shipped }));
 
 export type DroneTab = 'all' | 'fpv' | 'strike' | 'camera' | 'dev' | 'wing';
 export const DRONE_TABS: { id: DroneTab; label: string }[] = [

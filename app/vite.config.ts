@@ -62,12 +62,17 @@ function hasOnly1kTextures(): boolean {
   return true;
 }
 
-export const SHIPPED_MAPS = ['training_field', 'parking_garage'];
+/** maps in the builds: the PC build carries all of them, the phone build only the light ones (heavy props) */
+export const SHIPPED_MAPS = ['training_field', 'parking_garage', 'abandoned_factory', 'ruined_district'];
+export const MOBILE_MAPS = ['training_field', 'parking_garage'];
 
 export default defineConfig(({ mode }) => ({ // vitest's `test` key is not in vite's UserConfig type
   base: './',
-  define: { __LITE_ASSETS__: JSON.stringify(mode !== 'mobile' && hasOnly1kTextures()) },
-  plugins: [sharedAssets(SHIPPED_MAPS, mode === 'mobile')],
+  define: {
+    __LITE_ASSETS__: JSON.stringify(mode !== 'mobile' && hasOnly1kTextures()),
+    __SHIPPED_MAPS__: JSON.stringify(mode === 'mobile' ? MOBILE_MAPS : SHIPPED_MAPS),
+  },
+  plugins: [sharedAssets(mode === 'mobile' ? MOBILE_MAPS : SHIPPED_MAPS, mode === 'mobile')],
   server: { port: 5173, host: true },
   build: { target: 'es2022', chunkSizeWarningLimit: 6000 },
   oxc: { jsx: { runtime: 'automatic', importSource: 'preact' } }, // UI in Preact (src/ui/app)

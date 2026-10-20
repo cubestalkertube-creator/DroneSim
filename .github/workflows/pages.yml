@@ -1,0 +1,35 @@
+# Online version on GitHub Pages: takes the PC web build (DroneSim-PC.zip) from the latest release and publishes it.
+# The game's assets are not in git (docs/ASSETS.md), so CI does not build - it deploys the released build.
+name: Pages (web version from the latest release)
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Download the PC build from the latest release
+        run: gh release download --repo "${{ github.repository }}" --pattern DroneSim-PC.zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Unpack (the local launcher is not needed online)
+        run: |
+          unzip -q DroneSim-PC.zip
+          rm -f DroneSim/server.ps1 DroneSim/*.bat
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: DroneSim
+      - id: deploy
+        uses: actions/deploy-pages@v4
