@@ -1,5 +1,12 @@
 // DroneSim bootstrap: presets, the Preact UI (menus, ui/app) and the flight (game/flight.ts).
 // ?map=<id>&drone=<id> skips the menus and loads that flight directly (dev, automated checks); &mode=race — the race.
+// fonts are bundled (works offline, in the Capacitor / Tauri builds too)
+import '@fontsource/manrope/500.css';
+import '@fontsource/manrope/600.css';
+import '@fontsource/manrope/700.css';
+import '@fontsource/manrope/800.css';
+import '@fontsource/jetbrains-mono/500.css';
+import '@fontsource/jetbrains-mono/700.css';
 import type { DronePreset } from './sim/presets';
 import { fetchAssetJSON, AssetMissingError } from './render/world';
 import { isTouch } from './platform/platform';

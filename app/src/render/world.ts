@@ -5,7 +5,7 @@ import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import type { MapLayout } from '../sim/layout';
 import type { Quality } from './quality';
 import { SkyDome, acesToneMap, horizonColor } from './sky';
-import { buildSurroundings, fogDensity, overgrowFor, type OuterBox } from './surroundings';
+import { buildSurroundings, fogDensity, groundTintFor, overgrowFor, type OuterBox } from './surroundings';
 import { NATURAL_GROUND, groundVariation, setGroundBlend } from './groundShader';
 
 /** relative so the same build works from a web server root and from the Capacitor WebView */
@@ -114,7 +114,7 @@ export class RenderWorld {
         normalMap: this.texture(`${base}_nor_gl_${r}.jpg`, false),
         aoMap: arm, roughnessMap: arm, metalnessMap: arm, roughness: 1, metalness: 1, aoMapIntensity: 0.8,
       });
-      if (NATURAL_GROUND.test(tex)) groundVariation(m);
+      if (NATURAL_GROUND.test(tex)) groundVariation(m, /grass/i.test(tex) ? 0xc9c088 : 0xe0d8c8, /grass/i.test(tex));
       this.matCache.set(tex, m);
     }
     return m;
@@ -133,6 +133,8 @@ export class RenderWorld {
       mesh.receiveShadow = true;
       mesh.castShadow = !ground;
     });
+    const tint = groundTintFor(L);
+    if (tint != null) for (const [tex, m] of this.matCache) if (NATURAL_GROUND.test(tex)) m.color.set(tint);
     const og = overgrowFor(L);
     if (og) setGroundBlend(this.pbrMaterial(og.tex), this.pbrMaterial(og.ground).map!, og.tile, og.from, og.to);
     this.scene.add(root);

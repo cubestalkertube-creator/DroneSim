@@ -5,7 +5,7 @@
   --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px); --sb: env(safe-area-inset-bottom, 0px);
 }
 #app { position: fixed; inset: 0; pointer-events: none; z-index: 5 }
-.scr { position: absolute; inset: 0; pointer-events: auto; overflow-y: auto; overflow-x: hidden; background: var(--bg);
+.scr { position: absolute; inset: 0; pointer-events: auto; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; background: var(--bg);
   animation: scr-in .24s var(--ease); user-select: none; -webkit-overflow-scrolling: touch }
 @keyframes scr-in { from { opacity: 0; transform: translateY(8px) } }
 .scr button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer }
@@ -219,3 +219,4 @@ svg.curve { width: 100%; height: auto; display: block; margin-top: 10px }
 .lesson .best { font-family: var(--mono); font-size: 12px; color: var(--mute) }
 @media (max-width: 760px) { .lbrief { grid-template-columns: 1fr } .lpanel { width: min(300px, 46vw); top: 13%; padding: 10px 12px } .ltext { font-size: 14px } }
 body.touch .lpanel { width: min(320px, 40vw); top: 62px; padding: 10px 12px } body.touch .ltext { font-size: 14px }
+.scr::-webkit-scrollbar { display: none }

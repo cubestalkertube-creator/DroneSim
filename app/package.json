@@ -21,6 +21,8 @@
     "@capacitor/core": "^6.2.2",
     "@capacitor/haptics": "^6.0.3",
     "@dimforge/rapier3d-compat": "^0.21.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/manrope": "^5.3.0",
     "@preact/signals": "^2.11.3",
     "preact": "^11.0.1",
     "three": "^0.186.1"

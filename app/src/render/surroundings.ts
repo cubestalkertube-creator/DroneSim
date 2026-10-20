@@ -23,12 +23,14 @@ interface Look {
   fog?: number;
   /** the map's own ground texture that turns into the outer ground towards the map edge (m from the centre) */
   overgrow?: { tex: string; from: number; to: number };
+  /** colour the map's own natural ground is multiplied with (sRGB hex) */
+  groundTint?: number;
 }
 
 const LOOK: Record<string, Look> = {
   training_field: { kind: 'forest', ground: 'acg_grass001', tile: 4, tints: [0xffffff, 0xd6e0a8, 0xa9b986], rock: 0x8f8a80, snow: 0xeef1f4, trees: 1, fog: 0.00045 },
   abandoned_factory: { kind: 'industrial', ground: 'acg_grass004', tile: 4, tints: [0xe6d6a8, 0xc8bc90, 0xa8a07c], rock: 0x9a8a74, trees: 0.55, leaves: 0x3b4a26, fog: 0.0017, overgrow: { tex: 'gravel_concrete_03', from: 150, to: 215 } },
-  ruined_district: { kind: 'city', ground: 'acg_grass004', tile: 4, tints: [0xd8d8c0, 0xbfc2a6, 0xa3a68e], rock: 0x8c8a84, trees: 0.45, ruined: true, fog: 0.0019 },
+  ruined_district: { kind: 'city', ground: 'acg_grass004', tile: 4, tints: [0xd8d8c0, 0xbfc2a6, 0xa3a68e], rock: 0x8c8a84, trees: 0.45, ruined: true, fog: 0.0014, groundTint: 0xd8cf9e },
   parking_garage: { kind: 'city', ground: 'acg_grass004', tile: 4, tints: [0xffffff, 0xd8e0b8, 0xb7c29a], rock: 0x8c8a84, trees: 0.55, fog: 0.0011 },
 };
 
@@ -53,6 +55,9 @@ function rng(seed: number) {
 
 /** map ground material blended into the outer ground near the map edge */
 export function overgrowFor(L: MapLayout) { const l = lookFor(L); return l.overgrow ? { ...l.overgrow, ground: l.ground, tile: l.tile } : null; }
+
+/** tint of the map's own grass / dirt (null: as authored) */
+export function groundTintFor(L: MapLayout): number | null { return lookFor(L).groundTint ?? null; }
 
 /** fog density the renderer uses on this map */
 export function fogDensity(L: MapLayout): number { return lookFor(L).fog ?? Math.min(L.env.fog.density, 0.002); }
@@ -403,7 +408,7 @@ function industry(s: OuterSpec, r: () => number, opts: SurroundingsOpts): THREE.
   for (let i = 0, tries = 0; i < n && tries < n * 30; tries++) {
     const th = r() * Math.PI * 2, dx = Math.cos(th), dz = Math.sin(th);
     const b = s.half / Math.max(Math.abs(dx), Math.abs(dz));
-    const d = 260 + Math.pow(r(), 1.4) * 1400;
+    const d = 45 + Math.pow(r(), 1.4) * 1400;
     const x = dx * (b + d), z = dz * (b + d);
     if (fbm(x / 500, z / 500, 2, s.seed + 13) < -0.05) continue; // industrial zones, fields between
     const w = 30 + r() * 70, dd = 20 + r() * 40, h = 8 + r() * 12, yaw = (Math.floor(r() * 4) * Math.PI) / 2 + (r() - 0.5) * 0.3;

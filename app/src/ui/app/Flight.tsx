@@ -11,6 +11,13 @@ import { setFlight, ui } from './store';
 import { LessonBrief, LessonPanel, LessonResultCard } from './Lesson';
 
 /** The connected transmitter and its profile (polled: it may be plugged in while the overlay is open). */
+/** arrow key glyph (the bundled mono font has no ← →) */
+const Arr = ({ r }: { r: number }) => (
+  <svg viewBox="0 0 10 10" width="0.85em" height="0.85em" style={{ transform: `rotate(${r}deg)`, verticalAlign: '-0.08em' }}>
+    <path d="M5 1.2 8.6 5.4H6.1V8.8H3.9V5.4H1.4z" fill="currentColor" />
+  </svg>
+);
+
 function useRc(): { pad: Gamepad; prof: PadProfile } | null {
   const get = () => { const p = activePad(); const prof = p && isRC(p) ? padProfile(p) : undefined; return p && prof ? { pad: p, prof } : null; };
   const [rc, setRc] = useState(get);
@@ -67,7 +74,7 @@ function Help({ kind }: { kind: 'fpv' | 'gps' | 'plane' }) {
       <div>
         <div class="k">Газ{kind === 'fpv' ? ' (держится, как на пульте)' : ' (центр = висение)'}<b><kbd>W</kbd> <kbd>S</kbd>{kind === 'fpv' && <> · <kbd>X</kbd> сброс</>}</b></div>
         <div class="k">Рыскание<b><kbd>A</kbd> <kbd>D</kbd></b></div>
-        <div class="k">Тангаж / крен<b><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> или <kbd>I</kbd><kbd>K</kbd><kbd>J</kbd><kbd>L</kbd></b></div>
+        <div class="k">Тангаж / крен<b><kbd><Arr r={0} /></kbd><kbd><Arr r={180} /></kbd><kbd><Arr r={270} /></kbd><kbd><Arr r={90} /></kbd> или <kbd>I</kbd><kbd>K</kbd><kbd>J</kbd><kbd>L</kbd></b></div>
         <div class="k">Быстрее / точнее<b><kbd>Shift</kbd> / <kbd>Ctrl</kbd></b></div>
         <div class="k">Мышь как правый стик (+колесо = газ)<b><kbd>M</kbd></b></div>
         <div class="k">Арм / дизарм{kind === 'fpv' ? ' (газ в ноль)' : ''}<b><kbd>Пробел</kbd></b></div>

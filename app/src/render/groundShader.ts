@@ -7,6 +7,7 @@ varying vec3 vGroundPos;
 uniform vec3 uDryTint;
 uniform sampler2D uBlendMap;
 uniform vec4 uBlend; // on, tile (m), from, to (m, square distance from the map centre)
+uniform float uLush; // 1 = grass (dark lush hollows), 0 = gravel / dirt (only light / dry patches)
 float gHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float gNoise(vec2 p) {
   vec2 i = floor(p), f = fract(p);
@@ -18,13 +19,13 @@ float gFbm(vec2 p) { return 0.5 * gNoise(p) + 0.3 * gNoise(p * 2.07 + 13.1) + 0.
 
 const WHITE = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
 WHITE.needsUpdate = true;
-interface GroundUniforms { uDryTint: { value: THREE.Color }; uBlendMap: { value: THREE.Texture }; uBlend: { value: THREE.Vector4 } }
+interface GroundUniforms { uDryTint: { value: THREE.Color }; uBlendMap: { value: THREE.Texture }; uBlend: { value: THREE.Vector4 }; uLush: { value: number } }
 const PATCHED = new WeakMap<THREE.Material, GroundUniforms>();
 
 /** patch a MeshStandardMaterial with a map; `dry` is the tint of the dry patches (sRGB hex) */
-export function groundVariation(mat: THREE.MeshStandardMaterial, dry = 0xc9c088) {
+export function groundVariation(mat: THREE.MeshStandardMaterial, dry = 0xc9c088, lush = true) {
   if (PATCHED.has(mat)) return;
-  const u: GroundUniforms = { uDryTint: { value: new THREE.Color(dry) }, uBlendMap: { value: WHITE }, uBlend: { value: new THREE.Vector4() } };
+  const u: GroundUniforms = { uDryTint: { value: new THREE.Color(dry) }, uBlendMap: { value: WHITE }, uBlend: { value: new THREE.Vector4() }, uLush: { value: lush ? 1 : 0 } };
   PATCHED.set(mat, u);
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, u);
@@ -43,13 +44,17 @@ export function groundVariation(mat: THREE.MeshStandardMaterial, dry = 0xc9c088)
         if (uBlend.x > 0.5) {
           // outskirts of the map overgrown: another ground texture with a ragged edge
           float r = max(abs(vGroundPos.x), abs(vGroundPos.z)) + (gFbm(vGroundPos.xz * 0.03) - 0.5) * 60.0;
-          vec3 g2 = texture2D(uBlendMap, vGroundPos.xz / uBlend.y).rgb;
-          diffuseColor.rgb = mix(diffuseColor.rgb, g2, smoothstep(uBlend.z, uBlend.w, r));
+          vec3 g2 = texture2D(uBlendMap, vGroundPos.xz / uBlend.y).rgb * mix(vec3(1.0), uDryTint, 0.55);
+          // weeds through the yard: ragged patches of the other texture inside as well
+          float grain = gNoise(vGroundPos.xz * 0.45) * 0.6 + gNoise(vGroundPos.xz * 1.7) * 0.4;
+          float weeds = smoothstep(0.52, 0.8, gFbm(vGroundPos.xz * 0.021 + 5.0) + (grain - 0.5) * 0.35) * 0.85;
+          float edge = smoothstep(uBlend.z, uBlend.w, r + (grain - 0.5) * 18.0);
+          diffuseColor.rgb = mix(diffuseColor.rgb, g2, max(edge, weeds));
         }
         float gd = gFbm(vGroundPos.xz * 0.075 + 31.0);
         diffuseColor.rgb *= mix(vec3(1.0), uDryTint, smoothstep(0.45, 0.72, gm) * 0.9);
-        diffuseColor.rgb *= mix(vec3(0.72, 0.82, 0.66), vec3(1.0), smoothstep(0.18, 0.4, gm)); // lush, darker hollows
-        diffuseColor.rgb *= 0.82 + 0.34 * gd;`);
+        diffuseColor.rgb *= mix(mix(vec3(0.94), vec3(0.72, 0.82, 0.66), uLush), vec3(1.0), smoothstep(0.18, 0.4, gm)); // lush, darker hollows
+        diffuseColor.rgb *= mix(0.92 + 0.16 * gd, 0.82 + 0.34 * gd, uLush);`);
   };
   mat.customProgramCacheKey = () => 'ground-variation';
   mat.needsUpdate = true;

@@ -45,7 +45,9 @@
 | `ruined_district` | Разрушенный квартал | 84k | 13 169 (нужно слияние в крупные OBB) | 2 / 0 | overcast_soil_puresky_2k |
 | `parking_garage` | Паркинг | 8k | 827 + heightfield | 2 / 0 | kloofendal_overcast_puresky_2k |
 
-Превью: `docs/previews/map_*.png`. Генерация + рендер: `blender -b --factory-startup -P tools/blender/render_maps.py -- [ids]`.
+Превью: `docs/previews/map_*.png`. Генерация + рендер: `blender -b --factory-startup -P tools/blender/render_maps.py -- [ids]`. Фоны меню карт (`assets/ui/maps/<id>.jpg`) с октября 2026 — кадры из самой игры вместе с окрестностями (`docs/previews/ingame/map_<id>.jpg`, 1280 px): камера ставится через `__ds.rig` в dev-сборке, HUD скрыт.
+
+Окрестности карт (холмы, горы, лес / город / промзона за краем карты) не лежат в ассетах — они генерируются кодом из фиксированного seed: форма — `app/src/sim/outer.ts` (её же коллайдит физика), вид — `app/src/render/surroundings.ts` (таблица `LOOK` по id карты: текстура земли, оттенки, плотность леса, туман).
 
 ## Звуки (категории `assets/audio/`)
 `motors_fpv`, `motors_camera_drone`, `motors_heavy_multirotor`, `engines_fixed_wing`, `props_aero`, `wind`, `impacts`, `electronics` (бипы ESC, батарея, сервы), `fpv_video_static`, `ambience`, `ui`. Нерелевантные результаты поиска перенесены в `_rejected/` (`tools/prune_audio.py`) — прослушать и удалить. Каждый файл есть в `CREDITS.json` (автор, лицензия, URL) — **CC-BY обязательно указать в титрах игры**. Для релиза: заменить HQ-превью на оригиналы WAV/FLAC (нужен API-ключ Freesound) — названия/ID те же.

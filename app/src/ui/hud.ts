@@ -265,8 +265,9 @@ export class Hud {
       txt(q('.lsub'), `LAST ${Number.isNaN(L.last) ? 'DNF' : fmtT(L.last)} · BEST ${fmtT(L.best)}`);
     }
 
-    // --- FPV: crosshair and artificial horizon
+    // --- FPV: crosshair, lens vignette and artificial horizon
     this.cross.style.display = d.fpv ? '' : 'none';
+    cls(this.osd, 'fpv', d.fpv);
     const h = d.fpv ? d.horizon : null;
     if (h && Math.abs(h.off) < 0.95) {
       this.hz.style.display = '';

@@ -7,7 +7,7 @@
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow: hidden; -webkit-font-smoothing: antialiased; user-select: none }
 #view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none }
 #ui { position: fixed; inset: 0; pointer-events: none }
-.osd { position: absolute; inset: 0; font-family: var(--mono); font-weight: 700; font-size: clamp(12px, 1.35vw, 19px);
+.osd { position: absolute; inset: 0; isolation: isolate; font-family: var(--mono); font-weight: 700; font-size: clamp(12px, 1.35vw, 19px);
   color: #fff; text-shadow: 0 0 2px #000, 0 0 6px rgba(0, 0, 0, .85) }
 .osd .p { position: absolute; white-space: nowrap }
 .osd .tl { left: 2.6%; top: 4% } .osd .tr { right: 2.6%; top: 4%; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px }
@@ -162,8 +162,8 @@ body.touch .osd { font-size: clamp(11px, 1.6vh + .4vw, 16px) }
 body.touch .osd .tl { left: calc(2.5% + 56px + var(--sl, 0px)); top: 4% }
 body.touch .osd .tr { right: calc(2.5% + 110px); top: 4% }
 body.touch .osd .tc { top: calc(4% + 54px) }
-body.touch .osd .bl { left: calc(2.5% + 4px); top: 28%; bottom: auto }
-body.touch .osd .br { right: calc(2.5% + 4px); top: 28%; bottom: auto }
+body.touch .osd .bl { left: calc(2.5% + 4px); top: max(28%, calc(3.5% + var(--st, 0px) + 108px)); bottom: auto }
+body.touch .osd .br { right: calc(2.5% + 4px); top: max(28%, calc(3.5% + var(--st, 0px) + 108px)); bottom: auto }
 body.touch .osd .bc { bottom: 3% }
 body.touch .msg { top: 26% }
 body.touch .card { max-height: 94vh; padding: 18px 22px }
@@ -227,3 +227,6 @@ body.touch .sub { font-size: 13px }
 body.touch .osd .lm, body.touch .osd .rm, body.touch .osd .rc, body.touch .osd .dev { display: none }
 body.touch .osd .compact { display: block; padding: .3em .7em; border-radius: 9px; background: rgba(10, 14, 20, .4); text-shadow: none }
 body.touch .osd .tr { gap: 4px }
+/* FPV camera feel: soft lens vignette (only in the FPV view) */
+.osd.fpv::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: -1;
+  background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, .28) 88%, rgba(0, 0, 0, .5) 100%) }
